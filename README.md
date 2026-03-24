@@ -1,4 +1,4 @@
-# 🐾 PawCare — Pet Health Dashboard
+# 🐾 PawCare
 
 A Flask web app for tracking your pet's vaccinations, feeding schedule, health info, and chatting with Dr. Paws (AI vet assistant).
 
