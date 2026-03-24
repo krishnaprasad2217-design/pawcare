@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — PawCare</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --sage: #4a7c59; --sage-light: #e8f2ec; --sage-dark: #2d5238; --accent: #c8704a; --text: #1a1a18; --muted: #6b6b60; --cream: #faf7f2; --error: #c0392b; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+
+  .login-wrap { width: 100%; max-width: 460px; }
+  .logo { font-family: 'Fraunces', serif; font-size: 1.6rem; color: var(--sage-dark); text-align: center; margin-bottom: 2rem; display: block; text-decoration: none; }
+  .logo span { color: var(--accent); }
+
+  .card { background: white; border-radius: 20px; padding: 2.5rem; border: 1px solid rgba(0,0,0,0.07); box-shadow: 0 8px 40px rgba(0,0,0,0.06); }
+  .card h1 { font-family: 'Fraunces', serif; font-size: 1.7rem; font-weight: 300; margin-bottom: 0.3rem; }
+  .card p { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .card p a { color: var(--sage); text-decoration: none; font-weight: 500; }
+
+  .form-group { margin-bottom: 1.1rem; }
+  label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.4rem; }
+  input { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid rgba(0,0,0,0.12); border-radius: 10px; font-family: inherit; font-size: 0.95rem; background: white; transition: all 0.2s; }
+  input:focus { outline: none; border-color: var(--sage); box-shadow: 0 0 0 3px rgba(74,124,89,0.1); }
+
+  .error-msg { background: #fdf2f2; border: 1px solid #f5c6c6; color: var(--error); padding: 0.7rem 1rem; border-radius: 8px; font-size: 0.88rem; margin-bottom: 1rem; }
+
+  .submit-btn { width: 100%; padding: 0.9rem; background: var(--sage); color: white; border: none; border-radius: 50px; font-family: inherit; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.25s; margin-top: 0.5rem; }
+  .submit-btn:hover { background: var(--sage-dark); transform: translateY(-1px); }
+
+  .demo-info { margin-top: 1.5rem; padding: 1rem; background: var(--sage-light); border-radius: 10px; font-size: 0.82rem; color: var(--sage-dark); text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="login-wrap">
+  <a class="logo" href="/">Paw<span>Care</span></a>
+
+  <div class="card">
+    <h1>Welcome back</h1>
+    <p>New here? <a href="/signup">Create a free account</a></p>
+
+    {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+
+    <form method="POST" action="/login">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="you@email.com" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Your password" required>
+      </div>
+      <div style="text-align:right; margin-top:-0.4rem; margin-bottom:1rem;">
+        <a href="/forgot-password" style="font-size:0.82rem; color:var(--sage); text-decoration:none; font-weight:500;">Forgot password?</a>
+      </div>
+      <button type="submit" class="submit-btn">Sign In →</button>
+    </form>
+
+    <div class="demo-info">
+      🐾 First time? Sign up to create your pet's personal health profile
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

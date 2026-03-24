@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PawCare — Smart Pet Parenting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sage: #4a7c59; --sage-light: #e8f2ec; --sage-dark: #2d5238;
+    --warm: #f5ede0; --accent: #c8704a; --text: #1a1a18; --muted: #6b6b60;
+    --white: #fefefe; --cream: #faf7f2;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); overflow-x: hidden; }
+
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 100;
+    padding: 1.2rem 4rem; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(250, 247, 242, 0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(74, 124, 89, 0.15);
+  }
+  .logo { font-family: 'Fraunces', serif; font-size: 1.5rem; color: var(--sage-dark); letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 1rem; align-items: center; }
+  .btn-outline { padding: 0.55rem 1.4rem; border: 1.5px solid var(--sage); color: var(--sage-dark); border-radius: 50px; text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; background: transparent; cursor: pointer; }
+  .btn-outline:hover { background: var(--sage); color: white; }
+  .btn-fill { padding: 0.55rem 1.4rem; background: var(--sage); color: white; border-radius: 50px; text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; border: none; cursor: pointer; }
+  .btn-fill:hover { background: var(--sage-dark); }
+
+  .hero {
+    min-height: 100vh; display: flex; align-items: center;
+    padding: 8rem 4rem 4rem;
+    background: radial-gradient(ellipse at 70% 50%, rgba(74,124,89,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(200,112,74,0.06) 0%, transparent 50%);
+  }
+  .hero-content { max-width: 600px; }
+  .hero-tag { display: inline-block; background: var(--sage-light); color: var(--sage-dark); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.82rem; font-weight: 500; margin-bottom: 1.5rem; letter-spacing: 0.3px; }
+  h1 { font-family: 'Fraunces', serif; font-size: clamp(2.8rem, 5vw, 4.2rem); line-height: 1.1; font-weight: 300; margin-bottom: 1.5rem; color: var(--text); }
+  h1 em { font-style: italic; color: var(--sage); }
+  .hero p { font-size: 1.1rem; color: var(--muted); line-height: 1.8; margin-bottom: 2.5rem; max-width: 480px; }
+  .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn-hero { padding: 0.85rem 2rem; background: var(--sage); color: white; border-radius: 50px; text-decoration: none; font-size: 1rem; font-weight: 500; transition: all 0.25s; display: inline-block; }
+  .btn-hero:hover { background: var(--sage-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(74,124,89,0.3); }
+  .btn-hero-ghost { padding: 0.85rem 2rem; border: 1.5px solid rgba(26,26,24,0.2); color: var(--text); border-radius: 50px; text-decoration: none; font-size: 1rem; font-weight: 400; transition: all 0.25s; display: inline-block; }
+  .btn-hero-ghost:hover { border-color: var(--sage); color: var(--sage); }
+
+  .hero-visual {
+    position: absolute; right: 0; top: 0; width: 45%; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .paw-bg { position: absolute; font-size: 18rem; opacity: 0.04; user-select: none; }
+  .floating-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 2rem; }
+  .f-card {
+    background: white; border-radius: 16px; padding: 1.2rem;
+    border: 1px solid rgba(74,124,89,0.12);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    animation: float 4s ease-in-out infinite;
+  }
+  .f-card:nth-child(2) { animation-delay: 1s; margin-top: 2rem; }
+  .f-card:nth-child(3) { animation-delay: 2s; }
+  .f-card:nth-child(4) { animation-delay: 0.5s; margin-top: 2rem; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .f-card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .f-card h4 { font-size: 0.82rem; font-weight: 500; color: var(--text); margin-bottom: 0.2rem; }
+  .f-card p { font-size: 0.75rem; color: var(--muted); }
+
+  .features { padding: 6rem 4rem; background: white; }
+  .section-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: var(--sage); font-weight: 500; margin-bottom: 1rem; }
+  .features h2 { font-family: 'Fraunces', serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; margin-bottom: 3.5rem; }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem; }
+  .feat-card { padding: 2rem; border-radius: 16px; border: 1px solid rgba(74,124,89,0.1); transition: all 0.3s; background: var(--cream); }
+  .feat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(74,124,89,0.1); border-color: var(--sage); }
+  .feat-icon { width: 48px; height: 48px; background: var(--sage-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.2rem; }
+  .feat-card h3 { font-size: 1.05rem; font-weight: 500; margin-bottom: 0.6rem; }
+  .feat-card p { font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+
+  .cta-section { padding: 6rem 4rem; text-align: center; background: var(--sage-dark); color: white; }
+  .cta-section h2 { font-family: 'Fraunces', serif; font-size: 2.8rem; font-weight: 300; margin-bottom: 1rem; }
+  .cta-section p { color: rgba(255,255,255,0.7); margin-bottom: 2.5rem; font-size: 1.05rem; }
+  .btn-cta { padding: 1rem 2.5rem; background: var(--accent); color: white; border-radius: 50px; text-decoration: none; font-size: 1rem; font-weight: 500; transition: all 0.25s; display: inline-block; }
+  .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,112,74,0.4); }
+
+  footer { padding: 2rem 4rem; background: var(--text); color: rgba(255,255,255,0.4); font-size: 0.85rem; display: flex; justify-content: space-between; }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    .hero { padding: 7rem 1.5rem 4rem; }
+    .hero-visual { display: none; }
+    .features, .cta-section { padding: 4rem 1.5rem; }
+    footer { padding: 1.5rem; flex-direction: column; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Paw<span>Care</span></div>
+  <div class="nav-links">
+    <a href="/login" class="btn-outline">Sign In</a>
+    <a href="/signup" class="btn-fill">Get Started</a>
+  </div>
+</nav>
+
+<section class="hero" style="position:relative;">
+  <div class="hero-content">
+    <span class="hero-tag">🐾 Smart Pet Parenting Platform</span>
+    <h1>Your pet's health,<br><em>beautifully</em><br>organised.</h1>
+    <p>Track vaccinations, feeding schedules, vet appointments, and breed-specific care — all in one place designed for devoted pet parents.</p>
+    <div class="hero-cta">
+      <a href="/signup" class="btn-hero">Create Your Profile</a>
+      <a href="/login" class="btn-hero-ghost">Already a member</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="paw-bg">🐾</div>
+    <div class="floating-cards">
+      <div class="f-card"><div class="f-card-icon">💉</div><h4>Next Vaccine</h4><p>Rabies — in 12 days</p></div>
+      <div class="f-card"><div class="f-card-icon">🍽️</div><h4>Feeding Time</h4><p>2× daily, 8am & 6pm</p></div>
+      <div class="f-card"><div class="f-card-icon">🏥</div><h4>Nearest Vet</h4><p>2.3 km away</p></div>
+      <div class="f-card"><div class="f-card-icon">🎂</div><h4>Pet Age</h4><p>2 years 4 months</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="section-label">Everything you need</div>
+  <h2>Built for loving pet parents</h2>
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon">🗓️</div>
+      <h3>Vaccination Calendar</h3>
+      <p>Never miss a shot. Get breed-specific vaccination schedules with due dates, boosters, and status tracking.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🍗</div>
+      <h3>Smart Feeding Guide</h3>
+      <p>Food types, meal frequencies, and foods to avoid — tailored to your pet's breed and life stage.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🏥</div>
+      <h3>Nearby Hospitals</h3>
+      <p>Find the nearest vet clinics and pet hospitals based on your location with contact details.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📋</div>
+      <h3>Breed Care Tips</h3>
+      <p>Expert care tips specific to your pet's breed — grooming, exercise, health checks and more.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <h3>Age & Life Stage</h3>
+      <p>Know your pet's current life stage — puppy, adult, or senior — and get stage-appropriate advice.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🔔</div>
+      <h3>Personal Dashboard</h3>
+      <p>A complete overview of your pet's health profile, all in one beautiful, easy-to-read dashboard.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <h2>Your pet deserves the best care.</h2>
+  <p>Join thousands of pet parents who trust PawCare to keep their furry family healthy.</p>
+  <a href="/signup" class="btn-cta">Start for Free →</a>
+</section>
+
+<footer>
+  <span>© 2024 PawCare</span>
+  <span>Built with 🐾 for pet parents</span>
+</footer>
+
+</body>
+</html>

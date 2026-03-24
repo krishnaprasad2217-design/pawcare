@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ user.pet_name }}'s Dashboard — PawCare</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --sage: #4a7c59; --sage-light: #e8f2ec; --sage-dark: #2d5238;
+  --accent: #c8704a; --accent-light: #faf0ea;
+  --text: #1a1a18; --muted: #6b6b60; --cream: #faf7f2;
+  --white: #ffffff; --border: rgba(0,0,0,0.08);
+  --warning: #f59e0b; --warning-light: #fffbeb;
+  --danger: #ef4444; --danger-light: #fef2f2;
+  --success: #22c55e; --success-light: #f0fdf4;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); }
+
+.sidebar {
+  position: fixed; left: 0; top: 0; height: 100vh; width: 260px;
+  background: var(--sage-dark); padding: 2rem 1.5rem;
+  display: flex; flex-direction: column; z-index: 50; overflow-y: auto;
+}
+.logo { font-family: 'Fraunces', serif; font-size: 1.4rem; color: white; margin-bottom: 2rem; }
+.logo span { color: rgba(255,255,255,0.45); }
+
+.pet-profile { background: rgba(255,255,255,0.07); border-radius: 14px; padding: 1.2rem; margin-bottom: 2rem; }
+.pet-avatar-wrap { position: relative; width: 64px; height: 64px; margin-bottom: 0.8rem; }
+.pet-avatar { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; overflow: hidden; border: 2px solid rgba(255,255,255,0.3); cursor: pointer; }
+.pet-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-edit-btn { position: absolute; bottom: 0; right: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.pet-name { color: white; font-weight: 500; font-size: 1rem; }
+.pet-meta { color: rgba(255,255,255,0.5); font-size: 0.78rem; margin-top: 0.2rem; }
+.pet-badge { display: inline-block; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); padding: 0.2rem 0.7rem; border-radius: 50px; font-size: 0.72rem; margin-top: 0.5rem; text-transform: capitalize; }
+
+.nav-links { flex: 1; }
+.nav-link { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1rem; border-radius: 10px; color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; transition: all 0.2s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+.nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); color: white; }
+.nav-link .icon { font-size: 1rem; width: 20px; text-align: center; }
+
+.sidebar-bottom { margin-top: auto; padding-top: 1rem; }
+.logout-btn { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1rem; border-radius: 10px; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.85rem; transition: all 0.2s; }
+.logout-btn:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.08); }
+
+.main { margin-left: 260px; padding: 2.5rem; min-height: 100vh; }
+.page-header { margin-bottom: 2rem; }
+.greeting { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.3rem; }
+.page-title { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 300; }
+
+.section { display: none; }
+.section.active { display: block; }
+
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+.stat-card { background: white; border-radius: 16px; padding: 1.3rem; border: 1px solid var(--border); }
+.stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+.stat-val { font-size: 1.6rem; font-weight: 500; color: var(--text); font-family: 'Fraunces', serif; }
+.stat-sub { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+.stat-icon { float: right; font-size: 1.4rem; margin-top: -0.2rem; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.card { background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border); }
+.card-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+
+/* VACCINATION FULL LIST */
+.vacc-year-group { margin-bottom: 1.2rem; }
+.vacc-year-header {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 0.6rem 1rem; border-radius: 10px;
+  background: var(--sage-light); color: var(--sage-dark);
+  font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;
+  cursor: pointer; user-select: none;
+}
+.vacc-year-header .yr-arrow { margin-left: auto; transition: transform 0.2s; }
+.vacc-year-header.collapsed .yr-arrow { transform: rotate(-90deg); }
+.vacc-year-body { display: flex; flex-direction: column; gap: 0.4rem; }
+.vacc-year-body.hidden { display: none; }
+
+.vacc-row {
+  display: flex; align-items: center; gap: 0.9rem;
+  padding: 0.8rem 1rem; border-radius: 10px;
+  border: 1.5px solid var(--border); background: white;
+  transition: all 0.15s;
+}
+.vacc-row.taken {
+  background: var(--success-light); border-color: #bbf7d0;
+  opacity: 0.85;
+}
+.vacc-row input[type="checkbox"] {
+  width: 18px; height: 18px; accent-color: var(--sage);
+  cursor: pointer; flex-shrink: 0;
+}
+.vacc-row-name { font-weight: 500; font-size: 0.88rem; flex: 1; }
+.vacc-row-date { font-size: 0.76rem; color: var(--muted); white-space: nowrap; }
+.vacc-row-status { flex-shrink: 0; }
+
+/* STATUS BADGES */
+.badge { display: inline-block; padding: 0.22rem 0.65rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; }
+.badge-past { background: #f0fdf4; color: #15803d; }
+.badge-current { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; }
+.badge-upcoming { background: #eff6ff; color: #1d4ed8; }
+.badge-taken { background: var(--success-light); color: #15803d; }
+
+/* VACCINATION BOOK */
+.vbook-entry {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.85rem 1rem; border-radius: 12px;
+  background: var(--success-light); border: 1px solid #bbf7d0;
+  margin-bottom: 0.5rem;
+}
+.vbook-tick { font-size: 1.1rem; flex-shrink: 0; }
+.vbook-name { font-weight: 600; font-size: 0.9rem; flex: 1; }
+.vbook-meta { font-size: 0.76rem; color: var(--muted); }
+.vbook-year { font-size: 0.72rem; background: #dcfce7; color: #166534; padding: 0.15rem 0.6rem; border-radius: 50px; white-space: nowrap; }
+
+/* OVERVIEW DUE CARDS */
+.due-vacc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+}
+.due-vacc-row:last-child { border-bottom: none; }
+
+/* MEAL CARDS */
+.meal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.meal-card { background: white; border-radius: 14px; padding: 1rem; border: 1.5px solid var(--border); }
+.meal-card-icon { font-size: 1.6rem; margin-bottom: 0.5rem; }
+.meal-card-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+.meal-card-time { font-size: 1rem; font-weight: 600; color: var(--sage-dark); margin: 0.2rem 0; }
+.meal-card-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+.meal-notes-input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 0.45rem 0.6rem; font-size: 0.8rem; font-family: inherit; resize: none; outline: none; background: var(--cream); margin-top: 0.7rem; }
+.meal-notes-input:focus { border-color: var(--sage); }
+.save-meal-note-btn { margin-top: 0.4rem; font-size: 0.72rem; background: var(--sage); color: white; border: none; border-radius: 6px; padding: 0.3rem 0.7rem; cursor: pointer; }
+
+/* OUT-DIET */
+.out-diet-entry { display: flex; align-items: flex-start; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px solid var(--border); }
+.out-diet-entry:last-child { border-bottom: none; }
+.out-diet-entry-text { flex: 1; font-size: 0.88rem; line-height: 1.5; }
+.out-diet-entry-date { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+.out-diet-delete { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.9rem; padding: 0.2rem; opacity: 0.5; }
+.out-diet-delete:hover { opacity: 1; color: var(--danger); }
+.out-diet-form { display: flex; gap: 0.8rem; margin-top: 1rem; }
+.out-diet-input { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: 0.65rem 1rem; font-family: inherit; font-size: 0.88rem; outline: none; }
+.out-diet-input:focus { border-color: var(--sage); }
+.out-diet-add-btn { background: var(--sage); color: white; border: none; border-radius: 10px; padding: 0.65rem 1.2rem; font-family: inherit; font-size: 0.88rem; cursor: pointer; white-space: nowrap; }
+
+.food-tag { display: inline-block; background: var(--sage-light); color: var(--sage-dark); padding: 0.3rem 0.75rem; border-radius: 50px; font-size: 0.8rem; margin: 0.2rem; }
+.avoid-tag { display: inline-block; background: var(--danger-light); color: #b91c1c; padding: 0.3rem 0.75rem; border-radius: 50px; font-size: 0.8rem; margin: 0.2rem; }
+
+.tip-item { display: flex; align-items: flex-start; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px solid var(--border); }
+.tip-item:last-child { border-bottom: none; }
+.tip-num { width: 24px; height: 24px; border-radius: 50%; background: var(--sage-light); color: var(--sage-dark); font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tip-text { font-size: 0.88rem; line-height: 1.6; }
+
+.hospital-search { display: flex; gap: 0.8rem; margin-bottom: 1.5rem; }
+.hospital-search input { flex: 1; padding: 0.7rem 1rem; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.9rem; }
+.hospital-search input:focus { outline: none; border-color: var(--sage); }
+.search-btn { padding: 0.7rem 1.4rem; background: var(--sage); color: white; border: none; border-radius: 10px; font-family: inherit; font-size: 0.9rem; cursor: pointer; }
+.search-btn:hover { background: var(--sage-dark); }
+.hosp-card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+.hosp-icon { width: 44px; height: 44px; background: #fef2f2; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+.hosp-name { font-weight: 500; font-size: 0.95rem; margin-bottom: 0.2rem; }
+.hosp-meta { font-size: 0.8rem; color: var(--muted); }
+
+.life-bar-track { height: 8px; background: var(--border); border-radius: 50px; overflow: hidden; margin: 0.5rem 0; }
+.life-bar-fill { height: 100%; background: linear-gradient(90deg, var(--sage), var(--accent)); border-radius: 50px; }
+.life-bar-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
+
+/* My Pets */
+.my-pets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.pet-card-item { background: white; border: 1.5px solid var(--border); border-radius: 16px; padding: 1.2rem; text-align: center; position: relative; }
+.pet-card-avatar { width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 0.8rem; overflow: hidden; background: var(--sage-light); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+.pet-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pet-card-name { font-weight: 600; font-size: 1rem; margin-bottom: 0.2rem; }
+.pet-card-breed { font-size: 0.78rem; color: var(--muted); }
+.pet-card-delete { position: absolute; top: 0.6rem; right: 0.6rem; background: none; border: none; font-size: 0.9rem; cursor: pointer; color: var(--muted); opacity: 0.5; }
+.pet-card-delete:hover { opacity: 1; color: var(--danger); }
+.add-pet-card { border: 2px dashed var(--border); border-radius: 16px; padding: 1.2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; color: var(--muted); font-size: 0.85rem; min-height: 160px; background: none; width: 100%; }
+.add-pet-card:hover { border-color: var(--sage); color: var(--sage); background: var(--sage-light); }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: white; border-radius: 20px; padding: 2rem; width: 90%; max-width: 460px; position: relative; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 300; margin-bottom: 1.5rem; }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--muted); }
+.form-field { margin-bottom: 1rem; }
+.form-label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4rem; }
+.form-input { width: 100%; padding: 0.7rem 1rem; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.9rem; }
+.form-input:focus { outline: none; border-color: var(--sage); }
+.photo-upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 1.2rem; text-align: center; cursor: pointer; position: relative; }
+.photo-upload-area:hover { border-color: var(--sage); background: var(--sage-light); }
+.photo-upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.photo-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 0.5rem; display: block; }
+.btn-primary { background: var(--sage); color: white; border: none; border-radius: 10px; padding: 0.75rem 1.5rem; font-family: inherit; font-size: 0.9rem; font-weight: 500; cursor: pointer; width: 100%; }
+.btn-primary:hover { background: var(--sage-dark); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Profile photo */
+.profile-photo-big { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--sage-light); background: var(--sage-light); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; overflow: hidden; cursor: pointer; flex-shrink: 0; }
+.profile-photo-big img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ══════ PET GALLERY ══════ */
+.gallery-upload-zone {
+  border: 2.5px dashed var(--border); border-radius: 16px; padding: 2rem;
+  text-align: center; cursor: pointer; transition: all 0.2s; background: white; position: relative;
+}
+.gallery-upload-zone:hover, .gallery-upload-zone.dragover { border-color: var(--sage); background: var(--sage-light); }
+.gallery-upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.gallery-upload-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 10px; margin-bottom: 0.8rem; display: none; }
+.gallery-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.6rem 0; }
+.gallery-tag-btn {
+  padding: 0.3rem 0.8rem; border-radius: 50px; border: 1.5px solid var(--border);
+  background: white; font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
+  font-family: inherit; color: var(--muted);
+}
+.gallery-tag-btn:hover { border-color: var(--sage); color: var(--sage); }
+.gallery-tag-btn.selected { background: var(--sage); color: white; border-color: var(--sage); }
+
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.gallery-item { position: relative; border-radius: 14px; overflow: hidden; border: 1.5px solid var(--border); background: white; transition: all 0.2s; }
+.gallery-item:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+.gallery-item img { width: 100%; height: 180px; object-fit: cover; display: block; cursor: pointer; }
+.gallery-item-footer { padding: 0.65rem 0.8rem; }
+.gallery-item-caption { font-size: 0.82rem; color: var(--text); font-weight: 500; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gallery-item-meta { display: flex; align-items: center; justify-content: space-between; }
+.gallery-item-date { font-size: 0.7rem; color: var(--muted); }
+.gallery-item-tag { font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 50px; background: var(--sage-light); color: var(--sage-dark); font-weight: 500; }
+.gallery-item-delete { position: absolute; top: 0.5rem; right: 0.5rem; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.55); color: white; border: none; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+.gallery-item:hover .gallery-item-delete { opacity: 1; }
+
+.gallery-lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 300; align-items: center; justify-content: center; }
+.gallery-lightbox.open { display: flex; }
+.gallery-lightbox-inner { position: relative; max-width: 90vw; max-height: 90vh; }
+.gallery-lightbox-inner img { max-width: 88vw; max-height: 80vh; object-fit: contain; border-radius: 12px; display: block; }
+.gallery-lightbox-caption { color: white; text-align: center; margin-top: 0.8rem; font-size: 0.9rem; opacity: 0.85; }
+.gallery-lightbox-close { position: absolute; top: -40px; right: 0; background: none; border: none; color: white; font-size: 1.6rem; cursor: pointer; opacity: 0.7; }
+.gallery-lightbox-close:hover { opacity: 1; }
+.gallery-empty { text-align: center; padding: 3rem; color: var(--muted); }
+.gallery-filter-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.gallery-filter { padding: 0.3rem 0.9rem; border-radius: 50px; border: 1.5px solid var(--border); background: white; font-size: 0.78rem; cursor: pointer; font-family: inherit; color: var(--muted); transition: all 0.15s; }
+.gallery-filter.active { background: var(--sage); color: white; border-color: var(--sage); }
+.gallery-count { font-size: 0.78rem; color: var(--muted); margin-left: auto; align-self: center; }
+
+/* ══════ REALISTIC VACCINATION BOOK ══════ */
+.vbook-passport {
+  background: linear-gradient(135deg, #1a4a2e 0%, #2d6b44 50%, #1a4a2e 100%);
+  border-radius: 18px; padding: 1.8rem 2rem; margin-bottom: 1.5rem;
+  color: white; position: relative; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.vbook-passport::before {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 140px; height: 140px; border: 18px solid rgba(255,255,255,0.07);
+  border-radius: 50%;
+}
+.vbook-passport::after {
+  content: ''; position: absolute; bottom: -40px; left: 40px;
+  width: 100px; height: 100px; border: 12px solid rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+.vbook-passport-title { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.2rem; }
+.vbook-passport-sub { font-size: 0.72rem; opacity: 0.65; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1.2rem; }
+.vbook-passport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; font-size: 0.82rem; }
+.vbook-passport-field label { opacity: 0.55; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.15rem; }
+.vbook-passport-field span { font-weight: 500; font-size: 0.88rem; }
+.vbook-stamp-area { display: flex; gap: 0.6rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.vbook-stamp {
+  width: 52px; height: 52px; border: 2.5px solid rgba(255,255,255,0.4);
+  border-radius: 6px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; font-size: 0.55rem; text-align: center;
+  opacity: 0.5; line-height: 1.3; padding: 0.2rem; color: rgba(255,255,255,0.7);
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.vbook-stamp.stamped {
+  opacity: 1; border-color: #4ade80;
+  background: rgba(74,222,128,0.12); color: white;
+}
+.vbook-stamp.stamped .stamp-icon { font-size: 1.3rem; color: #4ade80; }
+.vbook-stamp .stamp-icon { font-size: 1.3rem; }
+.vbook-cert {
+  border: 2.5px solid var(--border); border-radius: 14px; padding: 1.2rem 1.4rem;
+  margin-bottom: 0.7rem; background: white; position: relative;
+}
+.vbook-cert::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--sage); border-radius: 4px 0 0 4px;
+}
+.vbook-cert.cert-pending::before { background: #f59e0b; }
+.vbook-cert.cert-upcoming::before { background: #3b82f6; }
+.vbook-cert-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem; }
+.vbook-cert-seal { width: 36px; height: 36px; border-radius: 50%; background: var(--sage-light); color: var(--sage-dark); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.vbook-cert.cert-pending .vbook-cert-seal { background: #fffbeb; }
+.vbook-cert.cert-upcoming .vbook-cert-seal { background: #eff6ff; }
+.vbook-cert-name { font-weight: 600; font-size: 0.92rem; flex: 1; }
+.vbook-cert-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; padding-top: 0.6rem; border-top: 1px dashed var(--border); }
+.vbook-cert-field { font-size: 0.72rem; }
+.vbook-cert-field .cf-label { color: var(--muted); display: block; margin-bottom: 0.1rem; }
+.vbook-cert-field .cf-val { font-weight: 500; color: var(--text); }
+.vbook-official { font-size: 0.68rem; color: var(--muted); text-align: right; margin-top: 0.5rem; font-style: italic; }
+
+/* ══════ WATER TRACKER ══════ */
+.water-cups { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.8rem 0; }
+.water-cup {
+  width: 38px; height: 38px; border-radius: 8px; border: 2px solid #bae6fd;
+  background: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; transition: all 0.15s; color: #bae6fd;
+}
+.water-cup.filled { background: #0ea5e9; border-color: #0284c7; color: white; }
+.water-cup:hover { transform: scale(1.08); }
+.water-stats { display: flex; gap: 1rem; margin-top: 0.6rem; }
+.water-stat { flex: 1; text-align: center; padding: 0.7rem; background: #f0f9ff; border-radius: 10px; }
+.water-stat-val { font-size: 1.2rem; font-weight: 600; color: #0284c7; font-family: 'Fraunces', serif; }
+.water-stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
+
+/* ══════ WEEKLY NUTRITION ══════ */
+.nutrition-day-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 0.4rem; margin-bottom: 1rem; }
+.nutrition-day { text-align: center; }
+.nutrition-day-label { font-size: 0.65rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; }
+.nutrition-bar-wrap { height: 60px; background: var(--border); border-radius: 4px; overflow: hidden; display: flex; align-items: flex-end; }
+.nutrition-bar { width: 100%; border-radius: 4px; transition: height 0.3s; }
+.nutrition-bar.good { background: var(--sage); }
+.nutrition-bar.ok { background: #f59e0b; }
+.nutrition-bar.low { background: #ef4444; }
+.nutrition-day-pct { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; }
+.nutrition-legend { display: flex; gap: 1rem; font-size: 0.73rem; color: var(--muted); justify-content: flex-end; margin-bottom: 0.8rem; }
+.nutrition-legend span { display: flex; align-items: center; gap: 0.3rem; }
+.nutrition-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.nutrition-legend .leg-good::before { background: var(--sage); }
+.nutrition-legend .leg-ok::before { background: #f59e0b; }
+.nutrition-legend .leg-low::before { background: #ef4444; }
+
+/* ══════ HEALTH RECORDS ══════ */
+.health-record-entry {
+  border: 1.5px solid var(--border); border-radius: 14px; padding: 1rem 1.2rem;
+  margin-bottom: 0.8rem; background: white; position: relative;
+}
+.health-record-entry.severity-mild { border-left: 4px solid #22c55e; }
+.health-record-entry.severity-moderate { border-left: 4px solid #f59e0b; }
+.health-record-entry.severity-severe { border-left: 4px solid #ef4444; }
+.health-record-header { display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.5rem; }
+.health-record-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--danger-light); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.health-record-title { font-weight: 600; font-size: 0.92rem; flex: 1; }
+.health-record-date { font-size: 0.73rem; color: var(--muted); white-space: nowrap; }
+.health-record-body { font-size: 0.84rem; color: var(--muted); line-height: 1.6; margin-bottom: 0.5rem; }
+.health-record-footer { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.health-tag { display: inline-block; padding: 0.18rem 0.6rem; border-radius: 50px; font-size: 0.68rem; font-weight: 500; }
+.health-tag-vet { background: #eff6ff; color: #1d4ed8; }
+.health-tag-med { background: #fdf4ff; color: #7e22ce; }
+.health-tag-resolved { background: var(--success-light); color: #15803d; }
+.health-tag-ongoing { background: #fffbeb; color: #92400e; }
+.health-record-delete { margin-left: auto; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.85rem; opacity: 0.5; }
+.health-record-delete:hover { opacity: 1; color: var(--danger); }
+.health-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+@media (max-width: 600px) { .health-form-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 1.2rem; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .meal-grid { grid-template-columns: 1fr 1fr; }
+  .mobile-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); z-index: 100; padding: 0.5rem; }
+  .mob-nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.5rem; border: none; background: none; cursor: pointer; color: var(--muted); font-size: 0.65rem; font-family: inherit; border-radius: 8px; }
+  .mob-nav-btn.active { color: var(--sage); background: var(--sage-light); }
+  .mob-nav-btn .icon { font-size: 1.1rem; }
+  body { padding-bottom: 70px; }
+}
+</style>
+</head>
+<body>
+<input type="file" id="profilePhotoInput" accept="image/*" style="display:none;" onchange="handleProfilePhotoSelect(event)">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">Paw<span>Care</span></div>
+  <div class="pet-profile">
+    <div class="pet-avatar-wrap">
+      <div class="pet-avatar" id="sidebarAvatar" onclick="document.getElementById('profilePhotoInput').click()" title="Click to change photo">
+        {% if user.profile_photo %}
+        <img src="{{ user.profile_photo }}" alt="{{ user.pet_name }}">
+        {% else %}
+        <span>{% if user.pet_type == 'cat' %}🐈{% elif user.pet_type == 'rabbit' %}🐇{% else %}🐕{% endif %}</span>
+        {% endif %}
+      </div>
+      <button class="avatar-edit-btn" onclick="document.getElementById('profilePhotoInput').click()">✏️</button>
+    </div>
+    <div class="pet-name">{{ user.pet_name }}</div>
+    <div class="pet-meta">{{ user.breed | title }} · {{ user.color }}</div>
+    <span class="pet-badge">{{ pet.life_stage }}</span>
+  </div>
+  <nav class="nav-links">
+    <button class="nav-link active" onclick="showSection('overview')"><span class="icon">🏠</span> Overview</button>
+    <button class="nav-link" onclick="showSection('vaccinations')"><span class="icon">💉</span> Vaccinations</button>
+    <button class="nav-link" onclick="showSection('vacc-book')"><span class="icon">📖</span> Vaccination Book</button>
+    <button class="nav-link" onclick="showSection('feeding')"><span class="icon">🍽️</span> Feeding Guide</button>
+    <button class="nav-link" onclick="showSection('health-records')"><span class="icon">🩺</span> Health Records</button>
+    <button class="nav-link" onclick="showSection('gallery')"><span class="icon">📸</span> Pet Gallery</button>
+    <button class="nav-link" onclick="showSection('hospitals')"><span class="icon">🏥</span> Nearby Hospitals</button>
+    <button class="nav-link" onclick="showSection('care')"><span class="icon">📋</span> Care Tips</button>
+    <button class="nav-link" onclick="showSection('profile')"><span class="icon">👤</span> My Profile</button>
+    <button class="nav-link" onclick="showSection('drpet')"><span class="icon">🩺</span> Dr. Pet</button>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="/logout" class="logout-btn"><span>🚪</span> Sign Out</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ═══════════════════════ OVERVIEW ═══════════════════════ -->
+  <div class="section active" id="sec-overview">
+    <div class="page-header">
+      <div class="greeting">Welcome back, {{ user.name.split()[0] }} 👋</div>
+      <h1 class="page-title">{{ user.pet_name }}'s Health Dashboard</h1>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-icon">🎂</span>
+        <div class="stat-label">Pet Age</div>
+        <div class="stat-val">{{ pet.age_years }}yr</div>
+        <div class="stat-sub">{{ pet.age_display }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🏷️</span>
+        <div class="stat-label">Life Stage</div>
+        <div class="stat-val" style="font-size:1.2rem;text-transform:capitalize;">{{ pet.life_stage }}</div>
+        <div class="stat-sub">{{ user.breed | title }}</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">💉</span>
+        <div class="stat-label">Due This Year</div>
+        <div class="stat-val" id="overviewDueCount">—</div>
+        <div class="stat-sub">Pending vaccines</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🍽️</span>
+        <div class="stat-label">Meals / Day</div>
+        <div class="stat-val">4×</div>
+        <div class="stat-sub">Morning · Afternoon · Evening · Night</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Due this year — only unticked current-year vaccines -->
+      <div class="card">
+        <div class="card-title">💉 Vaccines Due This Year <span id="overviewYearLabel" style="font-weight:400;text-transform:none;font-size:0.82rem;letter-spacing:0;"></span></div>
+        <div id="overviewVaccList">
+          <p style="color:var(--muted);font-size:0.88rem;text-align:center;padding:1rem;">Loading...</p>
+        </div>
+        <div style="margin-top:0.8rem;font-size:0.78rem;color:var(--muted);">
+          ✅ Tick a vaccine in the <strong>Vaccinations</strong> section to move it to your Vaccination Book.
+        </div>
+      </div>
+
+      <!-- Today's Meals -->
+      <div class="card">
+        <div class="card-title">🍽️ Today's Meal Times</div>
+        <div style="display:flex;flex-direction:column;gap:0.6rem;">
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.6rem 0.8rem;background:#fff8f0;border-radius:10px;">
+            <span style="font-size:1.2rem;">🌅</span><div><div style="font-weight:500;font-size:0.88rem;">Morning</div><div style="font-size:0.76rem;color:var(--muted);">7:00 AM</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.6rem 0.8rem;background:#f0f9ff;border-radius:10px;">
+            <span style="font-size:1.2rem;">☀️</span><div><div style="font-weight:500;font-size:0.88rem;">Afternoon</div><div style="font-size:0.76rem;color:var(--muted);">12:30 PM</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.6rem 0.8rem;background:#f0fdf4;border-radius:10px;">
+            <span style="font-size:1.2rem;">🌇</span><div><div style="font-weight:500;font-size:0.88rem;">Evening</div><div style="font-size:0.76rem;color:var(--muted);">5:30 PM</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.6rem 0.8rem;background:#faf5ff;border-radius:10px;">
+            <span style="font-size:1.2rem;">🌙</span><div><div style="font-weight:500;font-size:0.88rem;">Night</div><div style="font-size:0.76rem;color:var(--muted);">8:30 PM</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Life Bar -->
+    <div class="card">
+      <div class="card-title">📊 Life Journey — {{ user.pet_name }}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+        <span style="font-size:0.88rem;">Age: <strong>{{ pet.age_display }}</strong></span>
+        <span style="font-size:0.88rem;color:var(--muted);">Expected lifespan: {{ pet.lifespan_years }} years</span>
+      </div>
+      <div class="life-bar-track">
+        <div class="life-bar-fill" style="width:{{ [(pet.age_years / pet.lifespan_years * 100)|int, 100]|min }}%"></div>
+      </div>
+      <div class="life-bar-labels">
+        <span>Born</span><span>{{ (pet.lifespan_years*0.25)|int }}yr</span><span>{{ (pet.lifespan_years*0.6)|int }}yr</span><span>{{ pet.lifespan_years }}yr</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ VACCINATIONS ═══════════════════════ -->
+  <div class="section" id="sec-vaccinations">
+    <div class="page-header">
+      <div class="greeting">Full Schedule — Birth to Lifespan</div>
+      <h1 class="page-title">Vaccination Records</h1>
+    </div>
+    <div class="card" style="margin-bottom:0.8rem;background:#fffbeb;border-color:#fde68a;">
+      <div style="font-size:0.85rem;color:#92400e;line-height:1.7;">
+        💡 <strong>How to use:</strong> Tick the checkbox once a vaccine is given. It will be saved to your <strong>Vaccination Book</strong> and removed from the Overview due list.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>💉 All Vaccines — {{ user.pet_name }} ({{ user.breed | title }})</span>
+        <span style="font-size:0.75rem;font-weight:400;text-transform:none;letter-spacing:0;">Tick = taken ✅</span>
+      </div>
+      <div id="fullVaccList">
+        <p style="color:var(--muted);font-size:0.88rem;">Loading vaccination schedule...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ VACCINATION BOOK ═══════════════════════ -->
+  <div class="section" id="sec-vacc-book">
+    <div class="page-header">
+      <div class="greeting">Official Health Passport</div>
+      <h1 class="page-title">📖 Vaccination Book</h1>
+    </div>
+
+    <!-- Passport Cover -->
+    <div class="vbook-passport">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div>
+          <div style="font-size:0.65rem;opacity:0.55;letter-spacing:3px;text-transform:uppercase;margin-bottom:0.3rem;">🐾 Official Pet Health Record</div>
+          <div class="vbook-passport-title">Pet Vaccination Passport</div>
+          <div class="vbook-passport-sub">PawCare Health Authority</div>
+        </div>
+        <div style="font-size:2.8rem;opacity:0.7;">🛂</div>
+      </div>
+      <div class="vbook-passport-grid">
+        <div class="vbook-passport-field">
+          <label>Pet Name</label>
+          <span>{{ user.pet_name }}</span>
+        </div>
+        <div class="vbook-passport-field">
+          <label>Species / Breed</label>
+          <span>{{ user.pet_type | title }} / {{ user.breed | title }}</span>
+        </div>
+        <div class="vbook-passport-field">
+          <label>Date of Birth</label>
+          <span>{{ user.pet_dob }}</span>
+        </div>
+        <div class="vbook-passport-field">
+          <label>Colour / Markings</label>
+          <span>{{ user.color }}</span>
+        </div>
+        <div class="vbook-passport-field">
+          <label>Owner</label>
+          <span>{{ user.name }}</span>
+        </div>
+      </div>
+      <!-- Stamp Area -->
+      <div class="vbook-stamp-area" id="passportStamps"></div>
+    </div>
+
+    <!-- Certificate entries -->
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>🏅 Vaccination Certificates</span>
+        <span id="vbookCount" style="background:var(--sage-light);color:var(--sage-dark);padding:0.2rem 0.7rem;border-radius:50px;font-size:0.75rem;font-weight:500;">0 recorded</span>
+      </div>
+      <div id="vaccBookList">
+        <div style="text-align:center;padding:2rem;color:var(--muted);">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem;">💉</div>
+          <div style="font-size:0.9rem;">No vaccines recorded yet.</div>
+          <div style="font-size:0.82rem;margin-top:0.3rem;">Go to <strong>Vaccinations</strong> and tick the boxes to record taken vaccines.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ FEEDING ═══════════════════════ -->
+  <div class="section" id="sec-feeding">
+    <div class="page-header">
+      <div class="greeting">Nutrition & Diet</div>
+      <h1 class="page-title">Feeding Guide</h1>
+    </div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title">⏰ Daily Meal Schedule — {{ user.pet_name }}</div>
+      <div class="meal-grid">
+        <div class="meal-card">
+          <div class="meal-card-icon">🌅</div>
+          <div class="meal-card-label">Morning</div>
+          <div class="meal-card-time">7:00 AM</div>
+          <div class="meal-card-desc">{{ (pet.feeding.types or ['Kibble'])[0] }}</div>
+          <textarea class="meal-notes-input" id="note-morning" rows="2" placeholder="Add notes..."></textarea>
+          <button class="save-meal-note-btn" onclick="saveMealNote('morning')">Save</button>
+        </div>
+        <div class="meal-card">
+          <div class="meal-card-icon">☀️</div>
+          <div class="meal-card-label">Afternoon</div>
+          <div class="meal-card-time">12:30 PM</div>
+          <div class="meal-card-desc">{% if (pet.feeding.types or [])|length > 1 %}{{ pet.feeding.types[1] }}{% else %}Wet food / snack{% endif %}</div>
+          <textarea class="meal-notes-input" id="note-afternoon" rows="2" placeholder="Add notes..."></textarea>
+          <button class="save-meal-note-btn" onclick="saveMealNote('afternoon')">Save</button>
+        </div>
+        <div class="meal-card">
+          <div class="meal-card-icon">🌇</div>
+          <div class="meal-card-label">Evening</div>
+          <div class="meal-card-time">5:30 PM</div>
+          <div class="meal-card-desc">{% if (pet.feeding.types or [])|length > 2 %}{{ pet.feeding.types[2] }}{% else %}Cooked meal{% endif %}</div>
+          <textarea class="meal-notes-input" id="note-evening" rows="2" placeholder="Add notes..."></textarea>
+          <button class="save-meal-note-btn" onclick="saveMealNote('evening')">Save</button>
+        </div>
+        <div class="meal-card">
+          <div class="meal-card-icon">🌙</div>
+          <div class="meal-card-label">Night</div>
+          <div class="meal-card-time">8:30 PM</div>
+          <div class="meal-card-desc">Light snack / supplement</div>
+          <textarea class="meal-notes-input" id="note-night" rows="2" placeholder="Add notes..."></textarea>
+          <button class="save-meal-note-btn" onclick="saveMealNote('night')">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">✅ Recommended Food Types</div>
+        {% for food in (pet.feeding.types or []) %}<span class="food-tag">{{ food }}</span>{% endfor %}
+        {% if not pet.feeding.types %}<p style="color:var(--muted);font-size:0.88rem;">Consult your vet.</p>{% endif %}
+      </div>
+      <div class="card">
+        <div class="card-title">🚫 Foods to Avoid</div>
+        {% for item in (pet.feeding.avoid or []) %}<span class="avoid-tag">{{ item }}</span>{% endfor %}
+        {% if not pet.feeding.avoid %}<p style="color:var(--muted);font-size:0.88rem;">No specific data.</p>{% endif %}
+      </div>
+    </div>
+
+    <!-- Out-Diet -->
+    <div class="card">
+      <div class="card-title">🌿 Out-of-Diet Log <span style="font-weight:400;text-transform:none;font-size:0.8rem;letter-spacing:0;color:var(--muted);">— Track foods eaten outside regular diet</span></div>
+      <div id="outDietEntries"><p style="color:var(--muted);font-size:0.88rem;">No entries yet.</p></div>
+      <div class="out-diet-form">
+        <input type="text" class="out-diet-input" id="outDietInput" placeholder="e.g. Ate a piece of mango, biscuit from table..." onkeydown="if(event.key==='Enter') addOutDiet()">
+        <button class="out-diet-add-btn" onclick="addOutDiet()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Water Intake Tracker -->
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>💧 Water Intake Tracker</span>
+        <span style="font-size:0.78rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);">Today · Each cup = 50ml</span>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.6rem;">Tap cups to log water intake. Recommended: <strong id="waterRecLabel">{{ pet.feeding.water_per_day_ml or 500 }}ml/day</strong></div>
+      <div class="water-cups" id="waterCups"></div>
+      <div class="water-stats">
+        <div class="water-stat">
+          <div class="water-stat-val" id="waterConsumed">0 ml</div>
+          <div class="water-stat-label">Consumed Today</div>
+        </div>
+        <div class="water-stat">
+          <div class="water-stat-val" id="waterRemaining">—</div>
+          <div class="water-stat-label">Remaining</div>
+        </div>
+        <div class="water-stat">
+          <div class="water-stat-val" id="waterPct">0%</div>
+          <div class="water-stat-label">Daily Goal</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Nutrition Analysis -->
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>📊 Weekly Nutrition Score</span>
+        <button onclick="resetNutritionWeek()" style="font-size:0.72rem;background:var(--sage-light);color:var(--sage-dark);border:none;border-radius:6px;padding:0.2rem 0.6rem;cursor:pointer;">Reset Week</button>
+      </div>
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.8rem;">Based on your daily food entries. Log meals each day to build your nutrition history.</div>
+      <div class="nutrition-legend">
+        <span class="leg-good">Good (≥75%)</span>
+        <span class="leg-ok">Moderate (40–74%)</span>
+        <span class="leg-low">Low (&lt;40%)</span>
+      </div>
+      <div class="nutrition-day-grid" id="nutritionDayGrid"></div>
+      <div style="padding:0.8rem;background:var(--sage-light);border-radius:10px;font-size:0.83rem;color:var(--sage-dark);">
+        <strong>💡 Weekly Average: <span id="nutritionAvg">—</span></strong>
+        <span id="nutritionTip" style="margin-left:0.5rem;font-weight:400;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ HEALTH RECORDS ═══════════════════════ -->
+  <div class="section" id="sec-health-records">
+    <div class="page-header">
+      <div class="greeting">Illness & Treatment History</div>
+      <h1 class="page-title">🩺 Health Records</h1>
+    </div>
+    <div class="card" style="margin-bottom:1.5rem;background:#faf0ea;border-color:#fcd9c0;">
+      <div style="font-size:0.85rem;color:#7c3c1e;line-height:1.7;">
+        📋 <strong>Keep a complete health history.</strong> Record illnesses, vet visits, medications, and treatments here. Share this log with your vet for better care.
+      </div>
+    </div>
+
+    <!-- Add Record Form -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title">➕ Add Health Record</div>
+      <div class="health-form-grid">
+        <div class="form-field">
+          <label class="form-label">Illness / Condition *</label>
+          <input type="text" class="form-input" id="hrTitle" placeholder="e.g. Fever, Ear Infection, Vomiting">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="hrDate">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Severity</label>
+          <select class="form-input" id="hrSeverity">
+            <option value="mild">🟢 Mild</option>
+            <option value="moderate">🟡 Moderate</option>
+            <option value="severe">🔴 Severe</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="hrStatus">
+            <option value="resolved">✅ Resolved</option>
+            <option value="ongoing">⏳ Ongoing</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Vet / Doctor Consulted</label>
+        <input type="text" class="form-input" id="hrVet" placeholder="e.g. Dr. Rajan, City Vet Clinic">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Medications / Treatment</label>
+        <input type="text" class="form-input" id="hrMeds" placeholder="e.g. Amoxicillin 50mg, Ear drops, IV fluids">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Notes / Symptoms</label>
+        <textarea class="form-input" id="hrNotes" rows="2" placeholder="Describe symptoms, vet observations, follow-up required..." style="resize:vertical;"></textarea>
+      </div>
+      <button class="btn-primary" onclick="addHealthRecord()" style="width:auto;padding:0.7rem 1.8rem;">Save Record</button>
+      <div id="hrError" style="margin-top:0.5rem;color:var(--danger);font-size:0.82rem;display:none;"></div>
+    </div>
+
+    <!-- Records List -->
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>📂 All Health Records</span>
+        <span id="hrCount" style="background:#fef2f2;color:#b91c1c;padding:0.2rem 0.7rem;border-radius:50px;font-size:0.75rem;font-weight:500;">0 records</span>
+      </div>
+      <div id="healthRecordsList">
+        <div style="text-align:center;padding:2rem;color:var(--muted);">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem;">🩺</div>
+          <div style="font-size:0.9rem;">No health records yet.</div>
+          <div style="font-size:0.82rem;margin-top:0.3rem;">Add your pet's first health record above.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ PET GALLERY ═══════════════════════ -->
+  <div class="section" id="sec-gallery">
+    <div class="page-header">
+      <div class="greeting">Memories & Moments</div>
+      <h1 class="page-title">📸 {{ user.pet_name }}'s Gallery</h1>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title">➕ Add a Photo</div>
+      <div class="gallery-upload-zone" id="uploadZone">
+        <input type="file" accept="image/*" id="galleryFileInput" onchange="handleGalleryPhoto(event)">
+        <img id="galleryPreview" class="gallery-upload-preview">
+        <div id="uploadPlaceholder">
+          <div style="font-size:2.2rem;margin-bottom:0.5rem;">📷</div>
+          <div style="font-weight:500;font-size:0.9rem;color:var(--sage-dark);">Click or drag a photo here</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:0.3rem;">JPG, PNG, WEBP — max 2MB</div>
+        </div>
+      </div>
+      <div id="galleryFormFields" style="display:none; margin-top:1rem;">
+        <div class="form-field" style="margin-bottom:0.8rem;">
+          <label class="form-label">Caption</label>
+          <input type="text" class="form-input" id="galleryCaption" placeholder="e.g. First day at the beach 🌊" maxlength="120">
+        </div>
+        <div class="form-field" style="margin-bottom:0.8rem;">
+          <label class="form-label">Tag this moment</label>
+          <div class="gallery-tags" id="galleryTagBtns">
+            <button class="gallery-tag-btn" onclick="selectTag(this,'Everyday')">🐾 Everyday</button>
+            <button class="gallery-tag-btn" onclick="selectTag(this,'Playtime')">🎾 Playtime</button>
+            <button class="gallery-tag-btn" onclick="selectTag(this,'Outdoors')">🌿 Outdoors</button>
+            <button class="gallery-tag-btn" onclick="selectTag(this,'Vet Visit')">🏥 Vet Visit</button>
+            <button class="gallery-tag-btn" onclick="selectTag(this,'Birthday')">🎂 Birthday</button>
+            <button class="gallery-tag-btn" onclick="selectTag(this,'Grooming')">✂️ Grooming</button>
+            <button class="gallery-tag-btn" onclick="selectTag(this,'Sleeping')">😴 Sleeping</button>
+            <button class="gallery-tag-btn" onclick="selectTag(this,'Special')">⭐ Special</button>
+          </div>
+          <input type="hidden" id="galleryTag">
+        </div>
+        <div style="display:flex;gap:0.8rem;">
+          <button class="btn-primary" onclick="uploadGalleryPhoto()" id="galleryUploadBtn" style="width:auto;padding:0.65rem 1.5rem;">Save to Gallery</button>
+          <button onclick="cancelGalleryUpload()" style="padding:0.65rem 1.2rem;border-radius:10px;border:1.5px solid var(--border);background:white;cursor:pointer;font-family:inherit;font-size:0.88rem;color:var(--muted);">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery Grid -->
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;align-items:center;">
+        <span>🖼️ All Photos</span>
+        <span id="galleryCountBadge" style="background:var(--sage-light);color:var(--sage-dark);padding:0.2rem 0.7rem;border-radius:50px;font-size:0.75rem;font-weight:500;">0 photos</span>
+      </div>
+      <div class="gallery-filter-bar" id="galleryFilterBar">
+        <button class="gallery-filter active" onclick="filterGallery('all', this)">All</button>
+        <button class="gallery-filter" onclick="filterGallery('Everyday', this)">🐾 Everyday</button>
+        <button class="gallery-filter" onclick="filterGallery('Playtime', this)">🎾 Playtime</button>
+        <button class="gallery-filter" onclick="filterGallery('Outdoors', this)">🌿 Outdoors</button>
+        <button class="gallery-filter" onclick="filterGallery('Vet Visit', this)">🏥 Vet Visit</button>
+        <button class="gallery-filter" onclick="filterGallery('Special', this)">⭐ Special</button>
+      </div>
+      <div class="gallery-grid" id="galleryGrid">
+        <div class="gallery-empty" style="grid-column:1/-1;">
+          <div style="font-size:2.5rem;margin-bottom:0.8rem;">📷</div>
+          <div style="font-size:0.9rem;font-weight:500;">No photos yet</div>
+          <div style="font-size:0.82rem;margin-top:0.3rem;">Upload your first photo above to start the gallery!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="gallery-lightbox" id="galleryLightbox" onclick="closeLightbox(event)">
+    <div class="gallery-lightbox-inner">
+      <button class="gallery-lightbox-close" onclick="closeLightbox()">✕</button>
+      <img id="lightboxImg" src="" alt="">
+      <div class="gallery-lightbox-caption" id="lightboxCaption"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ HOSPITALS ═══════════════════════ -->
+  <div class="section" id="sec-hospitals">
+    <div class="page-header">
+      <div class="greeting">Veterinary Care</div>
+      <h1 class="page-title">Nearby Hospitals & Clinics</h1>
+    </div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title">🔍 Search Near Your Location</div>
+      <div class="hospital-search">
+        <input type="text" id="locationInput" placeholder="Enter your city or area..." value="{{ user.location }}">
+        <button class="search-btn" onclick="searchHospitals()">Find Vets Near Me</button>
+      </div>
+      <div id="hospitalResults"><p style="color:var(--muted);font-size:0.88rem;">Click "Find Vets Near Me" to search near <strong>{{ user.location }}</strong>.</p></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🗺️ Location Map</div>
+      <div style="width:100%;height:280px;border-radius:16px;background:var(--sage-light);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;color:var(--sage-dark);border:1px dashed var(--sage);">
+        <div style="font-size:2rem;">🗺️</div>
+        <p style="font-size:0.85rem;color:var(--muted);">Search above or</p>
+        <button class="search-btn" onclick="window.open('https://maps.google.com/maps?q=veterinary+hospital+near+'+encodeURIComponent('{{ user.location }}'),'_blank')">Open in Google Maps</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ CARE TIPS ═══════════════════════ -->
+  <div class="section" id="sec-care">
+    <div class="page-header">
+      <div class="greeting">Breed-Specific Guidance</div>
+      <h1 class="page-title">Care Tips for {{ user.breed | title }}</h1>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📋 Essential Care Guidelines</div>
+        {% for tip in pet.care_tips %}
+        <div class="tip-item"><div class="tip-num">{{ loop.index }}</div><div class="tip-text">{{ tip }}</div></div>
+        {% endfor %}
+        {% if not pet.care_tips %}<p style="color:var(--muted);">Consult your vet for breed-specific advice.</p>{% endif %}
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:1.5rem;">
+          <div class="card-title">🎯 Life Stage — {{ pet.life_stage | title }}</div>
+          <div style="font-size:0.88rem;line-height:1.9;">
+            {% if pet.life_stage in ['puppy','kitten','young'] %}
+            🐾 Critical development period. Ensure socialisation and proper nutrition.<br>🦷 Begin dental hygiene habits now.<br>🏃 Limit intense exercise until bones fully develop.
+            {% elif pet.life_stage == 'adult' %}
+            🐾 Maintain routine for feeding, exercise and vet check-ups.<br>⚖️ Monitor weight regularly.<br>💊 Keep up with parasite prevention year-round.
+            {% else %}
+            🐾 Senior pets need vet visits every 6 months.<br>🦴 Joint supplements and low-impact exercise are beneficial.<br>❤️ Watch for cognitive decline or sensory changes.
+            {% endif %}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📅 Annual Health Checklist</div>
+          {% for c in ['Annual vaccination booster','Dental health examination','Heartworm & parasite test','Blood panel / health screening','Weight & body condition check','Eye and ear examination'] %}
+          <div style="display:flex;align-items:center;gap:0.8rem;padding:0.6rem 0;border-bottom:1px solid var(--border);">
+            <span>☐</span><span style="font-size:0.85rem;">{{ c }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ PROFILE ═══════════════════════ -->
+  <div class="section" id="sec-profile">
+    <div class="page-header">
+      <div class="greeting">Account Details</div>
+      <h1 class="page-title">My Profile</h1>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">👤 Pet Parent Info</div>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div style="display:flex;justify-content:space-between;padding-bottom:0.8rem;border-bottom:1px solid var(--border);"><span style="color:var(--muted);font-size:0.85rem;">Name</span><span style="font-size:0.9rem;font-weight:500;">{{ user.name }}</span></div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:0.8rem;border-bottom:1px solid var(--border);"><span style="color:var(--muted);font-size:0.85rem;">Email</span><span style="font-size:0.88rem;">{{ user.email }}</span></div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:0.8rem;border-bottom:1px solid var(--border);"><span style="color:var(--muted);font-size:0.85rem;">Location</span><span style="font-size:0.88rem;">{{ user.location }}</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);font-size:0.85rem;">Member Since</span><span style="font-size:0.88rem;">{{ user.joined }}</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🐾 Pet Profile</div>
+        <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;">
+          <div class="profile-photo-big" onclick="document.getElementById('profilePhotoInput').click()">
+            {% if user.profile_photo %}<img src="{{ user.profile_photo }}" alt="{{ user.pet_name }}">
+            {% else %}<span>{% if user.pet_type == 'cat' %}🐈{% elif user.pet_type == 'rabbit' %}🐇{% else %}🐕{% endif %}</span>{% endif %}
+          </div>
+          <div>
+            <div style="font-weight:500;margin-bottom:0.3rem;">{{ user.pet_name }}</div>
+            <div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.8rem;">{{ user.breed | title }}</div>
+            <button class="search-btn" onclick="document.getElementById('profilePhotoInput').click()" style="font-size:0.82rem;padding:0.45rem 1rem;">📷 Change Photo</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.8rem;">
+          <div style="display:flex;justify-content:space-between;padding-bottom:0.8rem;border-bottom:1px solid var(--border);"><span style="color:var(--muted);font-size:0.85rem;">Breed</span><span>{{ user.breed | title }}</span></div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:0.8rem;border-bottom:1px solid var(--border);"><span style="color:var(--muted);font-size:0.85rem;">Colour</span><span>{{ user.color }}</span></div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:0.8rem;border-bottom:1px solid var(--border);"><span style="color:var(--muted);font-size:0.85rem;">Date of Birth</span><span>{{ user.pet_dob }}</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);font-size:0.85rem;">Age</span><span style="font-weight:500;color:var(--sage);">{{ pet.age_display }}</span></div>
+        </div>
+        <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border);">
+          <button onclick="confirmDeleteAccount()" style="width:100%;padding:0.6rem;border-radius:10px;background:var(--danger-light);color:#b91c1c;border:1px solid #fca5a5;font-size:0.85rem;cursor:pointer;">🗑️ Delete Account</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:0;">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>🐾 My Pets</span>
+        <span id="pet-count-badge" style="background:var(--sage-light);color:var(--sage-dark);padding:0.2rem 0.7rem;border-radius:50px;font-size:0.75rem;font-weight:500;">Loading...</span>
+      </div>
+      <div class="my-pets-grid" id="pets-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);">Loading your pets...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ DR. PET ═══════════════════════ -->
+  <div class="section" id="sec-drpet">
+    <div class="page-header">
+      <div class="greeting">AI Veterinary Assistant</div>
+      <h1 class="page-title">Dr. Pet 🩺</h1>
+    </div>
+
+    <div class="card" style="max-width:720px;margin:0 auto;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:1rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border);margin-bottom:1.2rem;">
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--sage-light);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">🐾</div>
+        <div>
+          <div style="font-weight:600;font-size:1rem;color:var(--sage-dark);">Dr. Pet</div>
+          <div style="font-size:0.78rem;color:var(--muted);">Your AI pet health companion — always here to help</div>
+        </div>
+        <button onclick="resetDrPet()" title="Clear chat" style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:8px;padding:0.35rem 0.8rem;font-size:0.75rem;color:var(--muted);cursor:pointer;">🗑️ Clear</button>
+      </div>
+
+      <!-- Chat messages -->
+      <div id="drpet-messages" style="height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:0.9rem;padding-right:4px;margin-bottom:1.2rem;">
+        <!-- Welcome message -->
+        <div class="drpet-bot-msg">
+          <span style="font-size:1.1rem;">🐾</span>
+          <div class="drpet-bubble-bot">
+            Hi {{ user.name }}! 👋 I'm Dr. Pet, your AI veterinary assistant. I'm here to help with any questions about <strong>{{ user.pet_name }}</strong>. Ask me about symptoms, diet, grooming, behaviour, or anything else pet-related!
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.65);margin-top:0.4rem;">Remember: I'm an AI assistant — always visit a real vet for serious concerns.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick suggestions -->
+      <div id="drpet-suggestions" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+        <button class="drpet-suggest" onclick="drpetQuick(this)">🍽️ What should {{ user.pet_name }} eat?</button>
+        <button class="drpet-suggest" onclick="drpetQuick(this)">💉 Vaccination schedule?</button>
+        <button class="drpet-suggest" onclick="drpetQuick(this)">🛁 How often to bathe?</button>
+        <button class="drpet-suggest" onclick="drpetQuick(this)">😟 Signs of illness?</button>
+      </div>
+
+      <!-- Image preview (shown when photo is selected) -->
+      <div id="drpet-img-preview-wrap" style="display:none;margin-bottom:0.8rem;position:relative;width:fit-content;">
+        <img id="drpet-img-preview" src="" alt="Selected photo"
+          style="max-height:160px;max-width:100%;border-radius:12px;border:2px solid var(--sage-light);display:block;">
+        <button onclick="clearDrPetImage()" title="Remove photo"
+          style="position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:white;border:none;font-size:0.75rem;cursor:pointer;line-height:1;">✕</button>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.35rem;">📷 Photo ready — add a message or send directly</div>
+      </div>
+
+      <!-- Input row -->
+      <div style="display:flex;gap:0.7rem;align-items:flex-end;">
+        <!-- Hidden file input -->
+        <input type="file" id="drpet-file-input" accept="image/jpeg,image/png,image/webp,image/gif"
+          style="display:none;" onchange="handleDrPetImage(event)">
+        <!-- Photo button -->
+        <button onclick="document.getElementById('drpet-file-input').click()" title="Upload a photo"
+          style="background:var(--sage-light);color:var(--sage-dark);border:1.5px solid rgba(74,124,89,0.25);border-radius:12px;padding:0.72rem 0.9rem;font-size:1rem;cursor:pointer;flex-shrink:0;transition:background 0.15s;">
+          📷
+        </button>
+        <textarea id="drpet-input" placeholder="Ask Dr. Pet anything about {{ user.pet_name }}…" rows="1"
+          style="flex:1;border:1.5px solid var(--border);border-radius:12px;padding:0.7rem 1rem;font-family:inherit;font-size:0.9rem;outline:none;resize:none;line-height:1.5;max-height:120px;overflow-y:auto;background:var(--cream);"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDrPet();}"></textarea>
+        <button onclick="sendDrPet()" id="drpet-send-btn"
+          style="background:var(--sage-dark);color:white;border:none;border-radius:12px;padding:0.75rem 1.3rem;font-size:0.9rem;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.2s;">
+          Send 🐾
+        </button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:0.6rem;text-align:center;">Powered by Claude AI · Not a substitute for professional veterinary care</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ADD PET MODAL -->
+<div class="modal-overlay" id="addPetModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAddPetModal()">✕</button>
+    <div class="modal-title">🐾 Add a New Pet</div>
+    <div class="form-field">
+      <label class="form-label">Pet Photo</label>
+      <div class="photo-upload-area">
+        <input type="file" accept="image/*" id="petPhotoInput" onchange="handlePhotoSelect(event)">
+        <img id="photoPreviewImg" class="photo-preview" src="" alt="" style="display:none;">
+        <div id="photoPlaceholder"><div style="font-size:2rem;margin-bottom:0.4rem;">📷</div><div style="font-size:0.85rem;font-weight:500;color:var(--sage);">Tap to choose</div></div>
+      </div>
+    </div>
+    <div class="form-field"><label class="form-label">Pet Name *</label><input type="text" class="form-input" id="newPetName" placeholder="e.g. Bruno, Bella"></div>
+    <div class="form-field"><label class="form-label">Pet Type</label><select class="form-input" id="newPetType"><option value="dog">🐕 Dog</option><option value="cat">🐈 Cat</option><option value="rabbit">🐇 Rabbit</option><option value="bird">🐦 Bird</option><option value="other">🐾 Other</option></select></div>
+    <div class="form-field"><label class="form-label">Breed *</label><input type="text" class="form-input" id="newPetBreed" placeholder="e.g. Golden Retriever"></div>
+    <div class="form-field"><label class="form-label">Date of Birth</label><input type="date" class="form-input" id="newPetDob"></div>
+    <button class="btn-primary" id="savePetBtn" onclick="saveNewPet()">Add Pet</button>
+    <div id="addPetError" style="margin-top:0.8rem;color:var(--danger);font-size:0.85rem;display:none;"></div>
+  </div>
+</div>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav">
+  <button class="mob-nav-btn active" onclick="showSection('overview',this)"><span class="icon">🏠</span>Home</button>
+  <button class="mob-nav-btn" onclick="showSection('vaccinations',this)"><span class="icon">💉</span>Vaccines</button>
+  <button class="mob-nav-btn" onclick="showSection('vacc-book',this)"><span class="icon">📖</span>Book</button>
+  <button class="mob-nav-btn" onclick="showSection('feeding',this)"><span class="icon">🍽️</span>Feeding</button>
+  <button class="mob-nav-btn" onclick="showSection('health-records',this)"><span class="icon">🩺</span>Health</button>
+  <button class="mob-nav-btn" onclick="showSection('gallery',this)"><span class="icon">📸</span>Gallery</button>
+</nav>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA from Jinja
+// ══════════════════════════════════════════════════════════════
+const ALL_VACCINATIONS = {{ pet.vaccinations | tojson }};
+const TODAY_YEAR = new Date().getFullYear();
+
+// vaccStatus: { "vaccine_id": { taken: true, date: "2024-03-01" } }
+let vaccStatus = {};
+
+// ══════════════════════════════════════════════════════════════
+// LOAD / SAVE VACCINATION STATUS
+// ══════════════════════════════════════════════════════════════
+async function loadVaccStatus() {
+  try {
+    const res = await fetch('/api/vaccination-status');
+    const data = await res.json();
+    vaccStatus = data.status || {};
+  } catch(e) {}
+  renderFullVaccList();
+  renderOverviewVaccines();
+  renderVaccBook();
+}
+
+async function persistVaccStatus() {
+  try {
+    await fetch('/api/vaccination-status', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({status: vaccStatus})
+    });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+// FULL VACCINATION LIST (Vaccinations section)
+// ══════════════════════════════════════════════════════════════
+function renderFullVaccList() {
+  const container = document.getElementById('fullVaccList');
+  if (!ALL_VACCINATIONS.length) {
+    container.innerHTML = '<p style="color:var(--muted);">No vaccination data for this breed. Consult your vet.</p>';
+    return;
+  }
+
+  // Group by vaccine name, then list all doses
+  const byName = {};
+  ALL_VACCINATIONS.forEach(v => {
+    if (!byName[v.name]) byName[v.name] = [];
+    byName[v.name].push(v);
+  });
+
+  let html = '';
+  Object.keys(byName).forEach(name => {
+    const doses = byName[name];
+    const allTaken = doses.every(d => vaccStatus[d.id]?.taken);
+
+    html += `<div class="vacc-year-group">
+      <div class="vacc-year-header" onclick="toggleGroup(this)">
+        <span>💉 ${name}</span>
+        <span style="font-size:0.75rem;color:var(--sage);margin-left:0.5rem;">${doses.length} dose${doses.length>1?'s':''}</span>
+        ${allTaken ? '<span style="font-size:0.75rem;background:#dcfce7;color:#166534;padding:0.1rem 0.5rem;border-radius:50px;margin-left:0.5rem;">✅ All done</span>' : ''}
+        <span class="yr-arrow">▼</span>
+      </div>
+      <div class="vacc-year-body">`;
+
+    doses.forEach(dose => {
+      const isTaken = vaccStatus[dose.id]?.taken;
+      const checkedAttr = isTaken ? 'checked' : '';
+      const rowClass = isTaken ? 'vacc-row taken' : 'vacc-row';
+
+      let statusBadge = '';
+      if (isTaken) {
+        statusBadge = '<span class="badge badge-taken">✅ Taken</span>';
+      } else if (dose.status === 'past') {
+        statusBadge = '<span class="badge badge-past">Past</span>';
+      } else if (dose.status === 'current') {
+        statusBadge = '<span class="badge badge-current">⚠️ This Year</span>';
+      } else {
+        statusBadge = '<span class="badge badge-upcoming">🔵 Upcoming</span>';
+      }
+
+      html += `<div class="${rowClass}" id="vrow-${CSS.escape(dose.id)}">
+        <input type="checkbox" ${checkedAttr} onchange="toggleVacc(this, '${dose.id.replace(/'/g,"\\'")}')">
+        <div style="flex:1;">
+          <div class="vacc-row-name">${dose.year_label}</div>
+          <div class="vacc-row-date">📅 Due: ${dose.due_date} &nbsp;·&nbsp; Pet age: ${dose.pet_age_at_dose}</div>
+        </div>
+        <div class="vacc-row-status">${statusBadge}</div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleGroup(header) {
+  header.classList.toggle('collapsed');
+  header.nextElementSibling.classList.toggle('hidden');
+}
+
+// ══════════════════════════════════════════════════════════════
+// TOGGLE VACCINATION (checkbox click)
+// ══════════════════════════════════════════════════════════════
+async function toggleVacc(checkbox, id) {
+  const row = document.getElementById('vrow-' + CSS.escape(id));
+  if (checkbox.checked) {
+    vaccStatus[id] = { taken: true, date: new Date().toISOString().split('T')[0] };
+    if (row) row.classList.add('taken');
+    // Update status badge in the row
+    const statusEl = row?.querySelector('.vacc-row-status');
+    if (statusEl) statusEl.innerHTML = '<span class="badge badge-taken">✅ Taken</span>';
+  } else {
+    delete vaccStatus[id];
+    if (row) row.classList.remove('taken');
+    // Restore original badge
+    const dose = ALL_VACCINATIONS.find(v => v.id === id);
+    if (dose && row) {
+      const statusEl = row.querySelector('.vacc-row-status');
+      if (statusEl) {
+        if (dose.status === 'past') statusEl.innerHTML = '<span class="badge badge-past">Past</span>';
+        else if (dose.status === 'current') statusEl.innerHTML = '<span class="badge badge-current">⚠️ This Year</span>';
+        else statusEl.innerHTML = '<span class="badge badge-upcoming">🔵 Upcoming</span>';
+      }
+    }
+  }
+  await persistVaccStatus();
+  renderOverviewVaccines();
+  renderVaccBook();
+}
+
+// ══════════════════════════════════════════════════════════════
+// OVERVIEW — show unticked current-year AND upcoming vaccines
+// ══════════════════════════════════════════════════════════════
+function renderOverviewVaccines() {
+  // Current year vaccines that are NOT taken
+  const dueNow = ALL_VACCINATIONS.filter(v =>
+    v.status === 'current' && !vaccStatus[v.id]?.taken
+  );
+  // Upcoming vaccines (future years) that are NOT taken
+  const upcoming = ALL_VACCINATIONS.filter(v =>
+    v.status === 'upcoming' && !vaccStatus[v.id]?.taken
+  );
+
+  const el = document.getElementById('overviewVaccList');
+  const countEl = document.getElementById('overviewDueCount');
+  const yearEl = document.getElementById('overviewYearLabel');
+
+  yearEl.textContent = `(${TODAY_YEAR})`;
+  countEl.textContent = dueNow.length + upcoming.length;
+
+  if (!dueNow.length && !upcoming.length) {
+    el.innerHTML = `<div style="text-align:center;padding:1.2rem;color:var(--sage-dark);">
+      <div style="font-size:1.8rem;margin-bottom:0.4rem;">🎉</div>
+      <div style="font-weight:500;font-size:0.9rem;">All vaccines are up to date!</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem;">Great job, pet parent!</div>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  dueNow.forEach(v => {
+    html += `<div class="due-vacc-row">
+      <div>
+        <div style="font-weight:500;font-size:0.88rem;">${v.name}</div>
+        <div style="font-size:0.76rem;color:var(--muted);margin-top:0.15rem;">📅 Due: ${v.due_date} · ${v.year_label}</div>
+      </div>
+      <span class="badge badge-current">⚠️ Due ${TODAY_YEAR}</span>
+    </div>`;
+  });
+  if (upcoming.length) {
+    html += `<div style="margin-top:0.6rem;margin-bottom:0.3rem;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);">🔵 Upcoming</div>`;
+    upcoming.forEach(v => {
+      const dueYear = v.due_date ? v.due_date.split(' ').slice(-1)[0] : '';
+      html += `<div class="due-vacc-row">
+        <div>
+          <div style="font-weight:500;font-size:0.88rem;">${v.name}</div>
+          <div style="font-size:0.76rem;color:var(--muted);margin-top:0.15rem;">📅 Due: ${v.due_date} · ${v.year_label}</div>
+        </div>
+        <span class="badge badge-upcoming">🔵 Upcoming</span>
+      </div>`;
+    });
+  }
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// VACCINATION BOOK — realistic passport style
+// ══════════════════════════════════════════════════════════════
+function renderVaccBook() {
+  const taken = ALL_VACCINATIONS.filter(v => vaccStatus[v.id]?.taken);
+  const pending = ALL_VACCINATIONS.filter(v => v.status === 'current' && !vaccStatus[v.id]?.taken);
+  const upcoming = ALL_VACCINATIONS.filter(v => v.status === 'upcoming' && !vaccStatus[v.id]?.taken);
+  const countEl = document.getElementById('vbookCount');
+  const listEl = document.getElementById('vaccBookList');
+  const stampsEl = document.getElementById('passportStamps');
+
+  countEl.textContent = `${taken.length} recorded`;
+
+  // Build passport stamps
+  if (stampsEl) {
+    const allVaccNames = [...new Set(ALL_VACCINATIONS.map(v => v.name))];
+    stampsEl.innerHTML = allVaccNames.slice(0,10).map(name => {
+      const isTaken = ALL_VACCINATIONS.filter(v => v.name===name).some(v => vaccStatus[v.id]?.taken);
+      const shortName = name.length > 8 ? name.slice(0,8)+'…' : name;
+      return `<div class="vbook-stamp ${isTaken ? 'stamped' : ''}">
+        <span class="stamp-icon">${isTaken ? '✅' : '○'}</span>
+        <span>${shortName}</span>
+      </div>`;
+    }).join('');
+  }
+
+  if (!taken.length && !pending.length && !upcoming.length) {
+    listEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--muted);">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem;">💉</div>
+      <div style="font-size:0.9rem;">No vaccines recorded yet.</div>
+      <div style="font-size:0.82rem;margin-top:0.3rem;">Go to <strong>Vaccinations</strong> and tick the boxes to record taken vaccines.</div>
+    </div>`;
+    return;
+  }
+
+  taken.sort((a, b) => a.due_date_iso.localeCompare(b.due_date_iso));
+
+  let html = '';
+
+  if (taken.length) {
+    html += `<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--sage-dark);margin-bottom:0.8rem;padding:0.3rem 0.6rem;background:var(--sage-light);border-radius:6px;display:inline-block;">✅ Administered (${taken.length})</div>`;
+    taken.forEach(v => {
+      const takenDate = vaccStatus[v.id]?.date || v.due_date;
+      const certNo = `VC-${v.id.slice(-5).toUpperCase()}`;
+      html += `<div class="vbook-cert">
+        <div class="vbook-cert-header">
+          <div class="vbook-cert-seal">💉</div>
+          <div>
+            <div class="vbook-cert-name">${v.name}</div>
+            <div style="font-size:0.72rem;color:var(--muted);">${v.year_label}</div>
+          </div>
+          <span class="badge badge-taken" style="margin-left:auto;">✅ Administered</span>
+        </div>
+        <div class="vbook-cert-grid">
+          <div class="vbook-cert-field"><span class="cf-label">Scheduled Date</span><span class="cf-val">📅 ${v.due_date}</span></div>
+          <div class="vbook-cert-field"><span class="cf-label">Administered On</span><span class="cf-val">🗓️ ${takenDate}</span></div>
+          <div class="vbook-cert-field"><span class="cf-label">Pet Age at Dose</span><span class="cf-val">🐾 ${v.pet_age_at_dose}</span></div>
+        </div>
+        <div class="vbook-official">Certificate No. ${certNo} · PawCare Health Authority · Verified ✓</div>
+      </div>`;
+    });
+  }
+
+  if (pending.length) {
+    html += `<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#92400e;margin:1rem 0 0.8rem;padding:0.3rem 0.6rem;background:#fffbeb;border-radius:6px;display:inline-block;">⚠️ Due This Year (${pending.length})</div>`;
+    pending.forEach(v => {
+      html += `<div class="vbook-cert cert-pending">
+        <div class="vbook-cert-header">
+          <div class="vbook-cert-seal" style="background:#fffbeb;">⏰</div>
+          <div>
+            <div class="vbook-cert-name">${v.name}</div>
+            <div style="font-size:0.72rem;color:var(--muted);">${v.year_label}</div>
+          </div>
+          <span class="badge badge-current" style="margin-left:auto;">⚠️ Due Soon</span>
+        </div>
+        <div class="vbook-cert-grid">
+          <div class="vbook-cert-field"><span class="cf-label">Scheduled Date</span><span class="cf-val">📅 ${v.due_date}</span></div>
+          <div class="vbook-cert-field"><span class="cf-label">Status</span><span class="cf-val" style="color:#b45309;">⏳ Pending</span></div>
+          <div class="vbook-cert-field"><span class="cf-label">Pet Age at Dose</span><span class="cf-val">🐾 ${v.pet_age_at_dose}</span></div>
+        </div>
+        <div class="vbook-official">Tick in <strong>Vaccinations</strong> section once administered to certify.</div>
+      </div>`;
+    });
+  }
+
+  if (upcoming.length) {
+    html += `<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#1d4ed8;margin:1rem 0 0.8rem;padding:0.3rem 0.6rem;background:#eff6ff;border-radius:6px;display:inline-block;">🔵 Upcoming (${upcoming.length})</div>`;
+    upcoming.forEach(v => {
+      html += `<div class="vbook-cert cert-upcoming">
+        <div class="vbook-cert-header">
+          <div class="vbook-cert-seal" style="background:#eff6ff;">📋</div>
+          <div>
+            <div class="vbook-cert-name">${v.name}</div>
+            <div style="font-size:0.72rem;color:var(--muted);">${v.year_label}</div>
+          </div>
+          <span class="badge badge-upcoming" style="margin-left:auto;">🔵 Upcoming</span>
+        </div>
+        <div class="vbook-cert-grid">
+          <div class="vbook-cert-field"><span class="cf-label">Scheduled Date</span><span class="cf-val">📅 ${v.due_date}</span></div>
+          <div class="vbook-cert-field"><span class="cf-label">Status</span><span class="cf-val" style="color:#1d4ed8;">📆 Planned</span></div>
+          <div class="vbook-cert-field"><span class="cf-label">Pet Age at Dose</span><span class="cf-val">🐾 ${v.pet_age_at_dose}</span></div>
+        </div>
+      </div>`;
+    });
+  }
+
+  listEl.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION NAVIGATION
+// ══════════════════════════════════════════════════════════════
+function showSection(name, mobileBtn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const map = ['overview','vaccinations','vacc-book','feeding','health-records','gallery','hospitals','care','profile'];
+  const idx = map.indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.nav-link')[idx]?.classList.add('active');
+  if (mobileBtn) {
+    document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+    mobileBtn.classList.add('active');
+  }
+  if (name === 'profile') loadPets();
+  if (name === 'feeding') { loadMealNotes(); loadOutDiet(); initWaterTracker(); renderNutritionChart(); }
+  if (name === 'health-records') renderHealthRecords();
+  if (name === 'gallery') loadGallery();
+}
+
+// ══════════════════════════════════════════════════════════════
+// HOSPITAL SEARCH
+// ══════════════════════════════════════════════════════════════
+function searchHospitals() {
+  const loc = document.getElementById('locationInput').value.trim() || '{{ user.location }}';
+  const query = encodeURIComponent('veterinary hospital near ' + loc);
+  const resultsDiv = document.getElementById('hospitalResults');
+  resultsDiv.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--muted);">🔍 Searching near <strong>${loc}</strong>...</div>`;
+  setTimeout(() => {
+    resultsDiv.innerHTML = `
+      <div class="hosp-card"><div class="hosp-icon">🏥</div><div><div class="hosp-name">Search on Google Maps</div><div class="hosp-meta">Real-time vet listings near you</div></div><div style="margin-left:auto;"><button class="search-btn" onclick="window.open('https://maps.google.com/maps?q=${query}','_blank')" style="font-size:0.8rem;padding:0.5rem 1rem;">Open Maps</button></div></div>
+      <div class="hosp-card"><div class="hosp-icon">🔍</div><div><div class="hosp-name">Search on JustDial</div><div class="hosp-meta">India's largest local services</div></div><div style="margin-left:auto;"><button class="search-btn" onclick="window.open('https://www.justdial.com/search?q=veterinary+hospital&city=${encodeURIComponent(loc)}','_blank')" style="font-size:0.8rem;padding:0.5rem 1rem;">Open</button></div></div>
+      <div class="hosp-card"><div class="hosp-icon">📱</div><div><div class="hosp-name">MrPet Vets Directory</div><div class="hosp-meta">Verified vet clinics and hospitals</div></div><div style="margin-left:auto;"><button class="search-btn" onclick="window.open('https://www.mrpet.in/veterinary-clinics/','_blank')" style="font-size:0.8rem;padding:0.5rem 1rem;">Open</button></div></div>`;
+  }, 700);
+}
+
+// ══════════════════════════════════════════════════════════════
+// MEAL NOTES + OUT DIET
+// ══════════════════════════════════════════════════════════════
+let mealNotes = {};
+let outDietEntries = [];
+
+async function loadMealNotes() {
+  try {
+    const res = await fetch('/api/diet-notes');
+    const data = await res.json();
+    mealNotes = data.notes || {};
+    ['morning','afternoon','evening','night'].forEach(m => {
+      const el = document.getElementById('note-'+m);
+      if (el && mealNotes['meal_'+m]) el.value = mealNotes['meal_'+m];
+    });
+    if (mealNotes.out_diet) { outDietEntries = mealNotes.out_diet; renderOutDiet(); }
+    if (mealNotes.health_records) { healthRecords = mealNotes.health_records; }
+  } catch(e) {}
+}
+
+function loadOutDiet() { renderOutDiet(); }
+
+async function saveMealNote(meal) {
+  const el = document.getElementById('note-'+meal);
+  if (!el) return;
+  mealNotes['meal_'+meal] = el.value;
+  mealNotes.out_diet = outDietEntries;
+  try {
+    await fetch('/api/diet-notes', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes: mealNotes}) });
+    const btn = el.nextElementSibling;
+    if (btn) { btn.textContent = 'Saved ✓'; setTimeout(() => btn.textContent = 'Save', 1500); }
+  } catch(e) {}
+}
+
+function addOutDiet() {
+  const input = document.getElementById('outDietInput');
+  const text = input.value.trim();
+  if (!text) return;
+  outDietEntries.push({ text, date: new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) });
+  input.value = '';
+  renderOutDiet();
+  saveOutDietData();
+}
+
+function removeOutDiet(idx) {
+  outDietEntries.splice(idx, 1);
+  renderOutDiet();
+  saveOutDietData();
+}
+
+function renderOutDiet() {
+  const el = document.getElementById('outDietEntries');
+  if (!el) return;
+  if (!outDietEntries.length) { el.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;">No entries yet.</p>'; return; }
+  el.innerHTML = outDietEntries.map((e,i) => `
+    <div class="out-diet-entry">
+      <span>🍴</span>
+      <span class="out-diet-entry-text">${e.text}</span>
+      <span class="out-diet-entry-date">${e.date}</span>
+      <button class="out-diet-delete" onclick="removeOutDiet(${i})">✕</button>
+    </div>`).join('');
+}
+
+async function saveOutDietData() {
+  mealNotes.out_diet = outDietEntries;
+  try {
+    await fetch('/api/diet-notes', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes: mealNotes}) });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+// PROFILE PHOTO
+// ══════════════════════════════════════════════════════════════
+function handleProfilePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5*1024*1024) { alert('Photo must be under 5MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const data = e.target.result;
+    document.getElementById('sidebarAvatar').innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;">`;
+    const bigPhoto = document.querySelector('.profile-photo-big');
+    if (bigPhoto) bigPhoto.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;">`;
+    try {
+      await fetch('/api/profile-photo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo: data}) });
+    } catch(e) {}
+  };
+  reader.readAsDataURL(file);
+}
+
+// ══════════════════════════════════════════════════════════════
+// MY PETS
+// ══════════════════════════════════════════════════════════════
+let selectedPhotoData = '';
+const PET_EMOJIS = { dog:'🐕', cat:'🐈', rabbit:'🐇', bird:'🐦', fish:'🐟', hamster:'🐹', other:'🐾' };
+
+async function loadPets() {
+  try {
+    const res = await fetch('/api/pets');
+    const data = await res.json();
+    renderPetsGrid(data.pets || []);
+  } catch(e) { renderPetsGrid([]); }
+}
+
+function renderPetsGrid(pets) {
+  const grid = document.getElementById('pets-grid');
+  document.getElementById('pet-count-badge').textContent = `${pets.length} pet${pets.length!==1?'s':''} added`;
+  let html = pets.map(pet => {
+    const emoji = PET_EMOJIS[pet.pet_type] || '🐾';
+    const avatar = pet.photo ? `<img src="${pet.photo}" alt="${pet.pet_name}">` : `<span>${emoji}</span>`;
+    return `<div class="pet-card-item">
+      <button class="pet-card-delete" onclick="deletePet('${pet.id}','${pet.pet_name.replace(/'/g,"\\'")}')">✕</button>
+      <div class="pet-card-avatar">${avatar}</div>
+      <div class="pet-card-name">${pet.pet_name}</div>
+      <div class="pet-card-breed">${pet.breed} · ${emoji}</div>
+    </div>`;
+  }).join('');
+  html += `<button class="add-pet-card" onclick="openAddPetModal()"><span style="font-size:1.8rem;">➕</span><span style="font-weight:500;">Add a Pet</span></button>`;
+  grid.innerHTML = html;
+}
+
+function openAddPetModal() {
+  document.getElementById('addPetModal').classList.add('open');
+  ['newPetName','newPetBreed'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('newPetDob').value = '';
+  document.getElementById('newPetType').value = 'dog';
+  document.getElementById('photoPreviewImg').style.display = 'none';
+  document.getElementById('photoPlaceholder').style.display = 'block';
+  document.getElementById('addPetError').style.display = 'none';
+  document.getElementById('petPhotoInput').value = '';
+  selectedPhotoData = '';
+}
+
+function closeAddPetModal() { document.getElementById('addPetModal').classList.remove('open'); }
+
+document.getElementById('addPetModal').addEventListener('click', function(e) { if (e.target===this) closeAddPetModal(); });
+
+function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5*1024*1024) { alert('Photo must be under 5MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    selectedPhotoData = e.target.result;
+    const preview = document.getElementById('photoPreviewImg');
+    preview.src = selectedPhotoData; preview.style.display = 'block';
+    document.getElementById('photoPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveNewPet() {
+  const name = document.getElementById('newPetName').value.trim();
+  const breed = document.getElementById('newPetBreed').value.trim();
+  const errEl = document.getElementById('addPetError');
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = "Enter pet name."; errEl.style.display = 'block'; return; }
+  if (!breed) { errEl.textContent = "Enter breed."; errEl.style.display = 'block'; return; }
+  const btn = document.getElementById('savePetBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const res = await fetch('/api/pets/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ pet_name: name, breed, pet_type: document.getElementById('newPetType').value, pet_dob: document.getElementById('newPetDob').value, photo: selectedPhotoData }) });
+    const data = await res.json();
+    if (data.success) { closeAddPetModal(); loadPets(); }
+    else { errEl.textContent = data.error || 'Failed.'; errEl.style.display = 'block'; }
+  } catch(e) { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
+  finally { btn.disabled = false; btn.textContent = 'Add Pet'; }
+}
+
+async function deletePet(id, name) {
+  if (!confirm(`Remove ${name}?`)) return;
+  try { await fetch(`/api/pets/delete/${id}`, {method:'DELETE'}); loadPets(); }
+  catch(e) { alert('Could not remove. Try again.'); }
+}
+
+async function confirmDeleteAccount() {
+  if (!confirm('⚠️ Delete account and all pet data? This cannot be undone.')) return;
+  if (!confirm('Last chance — are you sure?')) return;
+  try {
+    const res = await fetch('/api/account/delete', {method:'DELETE'});
+    const data = await res.json();
+    if (data.success) { alert('Account deleted. Goodbye! 🐾'); window.location.href='/'; }
+  } catch(e) { alert('Error. Try again.'); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// WATER INTAKE TRACKER
+// ══════════════════════════════════════════════════════════════
+const WATER_CUP_ML = 50;
+const WATER_GOAL_ML = 500; // fallback; ideally from pet data
+const WATER_CUPS_TOTAL = 12;
+let waterCupsFilled = 0;
+const TODAY_KEY = 'water_' + new Date().toISOString().split('T')[0];
+
+function initWaterTracker() {
+  // Load today's water from localStorage-like mealNotes
+  const saved = mealNotes[TODAY_KEY];
+  waterCupsFilled = saved ? parseInt(saved) : 0;
+  renderWaterCups();
+}
+
+function renderWaterCups() {
+  const container = document.getElementById('waterCups');
+  if (!container) return;
+  let html = '';
+  for (let i = 0; i < WATER_CUPS_TOTAL; i++) {
+    const filled = i < waterCupsFilled;
+    html += `<div class="water-cup ${filled ? 'filled' : ''}" onclick="toggleWaterCup(${i})" title="${(i+1)*WATER_CUP_ML}ml">💧</div>`;
+  }
+  container.innerHTML = html;
+  const consumed = waterCupsFilled * WATER_CUP_ML;
+  const goal = WATER_GOAL_ML;
+  const remaining = Math.max(0, goal - consumed);
+  const pct = Math.min(100, Math.round(consumed / goal * 100));
+  document.getElementById('waterConsumed').textContent = consumed + ' ml';
+  document.getElementById('waterRemaining').textContent = remaining + ' ml';
+  document.getElementById('waterPct').textContent = pct + '%';
+  document.getElementById('waterPct').style.color = pct >= 100 ? '#16a34a' : pct >= 60 ? '#0284c7' : '#dc2626';
+}
+
+function toggleWaterCup(idx) {
+  // Clicking a filled cup unfills from that cup onward; clicking empty fills up to that cup
+  if (idx < waterCupsFilled) {
+    waterCupsFilled = idx; // unfill from here
+  } else {
+    waterCupsFilled = idx + 1; // fill up to here
+  }
+  renderWaterCups();
+  saveWaterData();
+}
+
+async function saveWaterData() {
+  mealNotes[TODAY_KEY] = waterCupsFilled;
+  try {
+    await fetch('/api/diet-notes', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({notes: mealNotes}) });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+// WEEKLY NUTRITION ANALYSIS
+// ══════════════════════════════════════════════════════════════
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function getNutritionWeekData() {
+  const today = new Date();
+  const data = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = 'nutrition_' + d.toISOString().split('T')[0];
+    const dayName = DAYS[d.getDay()];
+    const isToday = i === 0;
+    // Score: count how many meals have notes for that day, max 4
+    const dayKey = d.toISOString().split('T')[0];
+    const mealsLogged = ['morning','afternoon','evening','night'].filter(m => {
+      const v = mealNotes['meal_'+m+'_'+dayKey] || (isToday ? mealNotes['meal_'+m] : null);
+      return v && v.trim().length > 0;
+    }).length;
+    const pct = Math.round((mealsLogged / 4) * 100);
+    // Also incorporate stored nutrition score
+    const stored = mealNotes[key] !== undefined ? parseInt(mealNotes[key]) : pct;
+    data.push({ day: dayName, pct: stored, isToday });
+  }
+  return data;
+}
+
+function renderNutritionChart() {
+  const grid = document.getElementById('nutritionDayGrid');
+  if (!grid) return;
+  const data = getNutritionWeekData();
+  let totalPct = 0; let countDays = 0;
+  let html = '';
+  data.forEach(d => {
+    const cls = d.pct >= 75 ? 'good' : d.pct >= 40 ? 'ok' : 'low';
+    const heightPct = Math.max(5, d.pct);
+    totalPct += d.pct; countDays++;
+    html += `<div class="nutrition-day">
+      <div class="nutrition-day-label" style="${d.isToday ? 'color:var(--sage-dark);font-weight:700;' : ''}">${d.day}${d.isToday ? ' ◀' : ''}</div>
+      <div class="nutrition-bar-wrap">
+        <div class="nutrition-bar ${cls}" style="height:${heightPct}%;"></div>
+      </div>
+      <div class="nutrition-day-pct">${d.pct}%</div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+  const avg = countDays ? Math.round(totalPct / countDays) : 0;
+  document.getElementById('nutritionAvg').textContent = avg + '%';
+  const tipEl = document.getElementById('nutritionTip');
+  if (avg >= 75) tipEl.textContent = '🌟 Excellent nutrition week!';
+  else if (avg >= 50) tipEl.textContent = '👍 Good, try to log all meals daily.';
+  else tipEl.textContent = '💡 Log meals each day to build a better record.';
+}
+
+function resetNutritionWeek() {
+  if (!confirm('Reset this week\'s nutrition data?')) return;
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = 'nutrition_' + d.toISOString().split('T')[0];
+    delete mealNotes[key];
+  }
+  renderNutritionChart();
+}
+
+// ══════════════════════════════════════════════════════════════
+// HEALTH RECORDS
+// ══════════════════════════════════════════════════════════════
+let healthRecords = [];
+
+async function loadHealthRecords() {
+  try {
+    const res = await fetch('/api/diet-notes');
+    const data = await res.json();
+    const notes = data.notes || {};
+    healthRecords = notes.health_records || [];
+  } catch(e) { healthRecords = []; }
+}
+
+async function saveHealthRecords() {
+  mealNotes.health_records = healthRecords;
+  try {
+    await fetch('/api/diet-notes', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({notes: mealNotes}) });
+  } catch(e) {}
+}
+
+function addHealthRecord() {
+  const title = document.getElementById('hrTitle').value.trim();
+  const errEl = document.getElementById('hrError');
+  errEl.style.display = 'none';
+  if (!title) { errEl.textContent = 'Please enter an illness or condition name.'; errEl.style.display = 'block'; return; }
+
+  const today = new Date().toISOString().split('T')[0];
+  const record = {
+    id: Date.now().toString(),
+    title,
+    date: document.getElementById('hrDate').value || today,
+    severity: document.getElementById('hrSeverity').value,
+    status: document.getElementById('hrStatus').value,
+    vet: document.getElementById('hrVet').value.trim(),
+    meds: document.getElementById('hrMeds').value.trim(),
+    notes: document.getElementById('hrNotes').value.trim()
+  };
+  healthRecords.unshift(record);
+  saveHealthRecords();
+  renderHealthRecords();
+  // Clear form
+  ['hrTitle','hrVet','hrMeds','hrNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('hrDate').value = '';
+  document.getElementById('hrSeverity').value = 'mild';
+  document.getElementById('hrStatus').value = 'resolved';
+}
+
+function deleteHealthRecord(id) {
+  if (!confirm('Delete this health record?')) return;
+  healthRecords = healthRecords.filter(r => r.id !== id);
+  saveHealthRecords();
+  renderHealthRecords();
+}
+
+function renderHealthRecords() {
+  const el = document.getElementById('healthRecordsList');
+  const countEl = document.getElementById('hrCount');
+  if (!el) return;
+  countEl.textContent = `${healthRecords.length} record${healthRecords.length !== 1 ? 's' : ''}`;
+  if (!healthRecords.length) {
+    el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--muted);">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem;">🩺</div>
+      <div style="font-size:0.9rem;">No health records yet.</div>
+      <div style="font-size:0.82rem;margin-top:0.3rem;">Add your pet's first health record above.</div>
+    </div>`;
+    return;
+  }
+  const sevIcon = { mild: '🟢', moderate: '🟡', severe: '🔴' };
+  const sevLabel = { mild: 'Mild', moderate: 'Moderate', severe: 'Severe' };
+  el.innerHTML = healthRecords.map(r => `
+    <div class="health-record-entry severity-${r.severity}">
+      <div class="health-record-header">
+        <div class="health-record-icon">🩺</div>
+        <div class="health-record-title">${r.title}</div>
+        <div class="health-record-date">📅 ${r.date}</div>
+        <button class="health-record-delete" onclick="deleteHealthRecord('${r.id}')">✕</button>
+      </div>
+      ${r.notes ? `<div class="health-record-body">${r.notes}</div>` : ''}
+      <div class="health-record-footer">
+        <span class="health-tag" style="background:#f1f5f9;color:#475569;">${sevIcon[r.severity]} ${sevLabel[r.severity]}</span>
+        <span class="health-tag ${r.status === 'resolved' ? 'health-tag-resolved' : 'health-tag-ongoing'}">${r.status === 'resolved' ? '✅ Resolved' : '⏳ Ongoing'}</span>
+        ${r.vet ? `<span class="health-tag health-tag-vet">🏥 ${r.vet}</span>` : ''}
+        ${r.meds ? `<span class="health-tag health-tag-med">💊 ${r.meds}</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// PET GALLERY
+// ══════════════════════════════════════════════════════════════
+let galleryData = [];
+let galleryFilter = 'all';
+let galleryPhotoData = '';
+let selectedGalleryTag = '';
+
+async function loadGallery() {
+  try {
+    const res = await fetch('/api/gallery');
+    const data = await res.json();
+    galleryData = data.gallery || [];
+  } catch(e) { galleryData = []; }
+  renderGallery();
+}
+
+function handleGalleryPhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { alert('Photo must be under 2MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    galleryPhotoData = e.target.result;
+    const preview = document.getElementById('galleryPreview');
+    preview.src = galleryPhotoData;
+    preview.style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('galleryFormFields').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function selectTag(btn, tag) {
+  document.querySelectorAll('.gallery-tag-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedGalleryTag = tag;
+  document.getElementById('galleryTag').value = tag;
+}
+
+function cancelGalleryUpload() {
+  galleryPhotoData = '';
+  selectedGalleryTag = '';
+  document.getElementById('galleryPreview').style.display = 'none';
+  document.getElementById('uploadPlaceholder').style.display = 'block';
+  document.getElementById('galleryFormFields').style.display = 'none';
+  document.getElementById('galleryCaption').value = '';
+  document.getElementById('galleryFileInput').value = '';
+  document.querySelectorAll('.gallery-tag-btn').forEach(b => b.classList.remove('selected'));
+}
+
+async function uploadGalleryPhoto() {
+  if (!galleryPhotoData) return;
+  const caption = document.getElementById('galleryCaption').value.trim();
+  const tag = selectedGalleryTag;
+  const btn = document.getElementById('galleryUploadBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const res = await fetch('/api/gallery/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo: galleryPhotoData, caption, tag })
+    });
+    const data = await res.json();
+    if (data.success) {
+      galleryData.unshift(data.entry);
+      cancelGalleryUpload();
+      renderGallery();
+    } else {
+      alert(data.error || 'Failed to save photo.');
+    }
+  } catch(e) { alert('Network error. Please try again.'); }
+  finally { btn.disabled = false; btn.textContent = 'Save to Gallery'; }
+}
+
+async function deleteGalleryPhoto(id, e) {
+  e.stopPropagation();
+  if (!confirm('Remove this photo from the gallery?')) return;
+  try {
+    await fetch(`/api/gallery/delete/${id}`, { method: 'DELETE' });
+    galleryData = galleryData.filter(p => p.id !== id);
+    renderGallery();
+  } catch(e) { alert('Could not delete. Try again.'); }
+}
+
+function filterGallery(tag, btn) {
+  galleryFilter = tag;
+  document.querySelectorAll('.gallery-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGallery();
+}
+
+function renderGallery() {
+  const grid = document.getElementById('galleryGrid');
+  const countEl = document.getElementById('galleryCountBadge');
+  const filtered = galleryFilter === 'all' ? galleryData : galleryData.filter(p => p.tag === galleryFilter);
+  countEl.textContent = `${galleryData.length} photo${galleryData.length !== 1 ? 's' : ''}`;
+
+  if (!filtered.length) {
+    const msg = galleryFilter === 'all'
+      ? '<div style="font-size:2.5rem;margin-bottom:0.8rem;">📷</div><div style="font-size:0.9rem;font-weight:500;">No photos yet</div><div style="font-size:0.82rem;margin-top:0.3rem;">Upload your first photo above!</div>'
+      : `<div style="font-size:2rem;margin-bottom:0.6rem;">🔍</div><div style="font-size:0.9rem;">No photos tagged <strong>${galleryFilter}</strong> yet.</div>`;
+    grid.innerHTML = `<div class="gallery-empty" style="grid-column:1/-1;">${msg}</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const tagHtml = p.tag ? `<span class="gallery-item-tag">${p.tag}</span>` : '';
+    const caption = p.caption || 'No caption';
+    return `<div class="gallery-item">
+      <img src="${p.photo}" alt="${caption}" onclick="openLightbox('${p.id}')" loading="lazy">
+      <button class="gallery-item-delete" onclick="deleteGalleryPhoto('${p.id}', event)" title="Remove photo">✕</button>
+      <div class="gallery-item-footer">
+        <div class="gallery-item-caption" title="${caption}">${caption}</div>
+        <div class="gallery-item-meta">
+          <span class="gallery-item-date">📅 ${p.date}</span>
+          ${tagHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openLightbox(id) {
+  const photo = galleryData.find(p => p.id === id);
+  if (!photo) return;
+  document.getElementById('lightboxImg').src = photo.photo;
+  document.getElementById('lightboxCaption').textContent = photo.caption || '';
+  document.getElementById('galleryLightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox(e) {
+  if (e && e.target !== document.getElementById('galleryLightbox') && !e.target.classList.contains('gallery-lightbox-close')) return;
+  document.getElementById('galleryLightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Drag and drop for upload zone
+const uploadZone = document.getElementById('uploadZone');
+if (uploadZone) {
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('galleryFileInput').files = dt.files;
+      handleGalleryPhoto({ target: { files: dt.files } });
+    }
+  });
+}
+loadVaccStatus();
+loadHealthRecords();
+</script>
+<!-- ═══════════════ DR. PET STYLES ═══════════════ -->
+<style>
+.drpet-bot-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.drpet-user-msg {
+  display: flex;
+  justify-content: flex-end;
+}
+.drpet-bubble-bot {
+  background: var(--sage-dark);
+  color: white;
+  border-radius: 16px 16px 16px 4px;
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  max-width: 78%;
+}
+.drpet-bubble-user {
+  background: var(--accent-light);
+  color: var(--text);
+  border-radius: 16px 16px 4px 16px;
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  max-width: 78%;
+  border: 1px solid rgba(200,112,74,0.18);
+}
+.drpet-suggest {
+  background: var(--sage-light);
+  color: var(--sage-dark);
+  border: 1px solid rgba(74,124,89,0.2);
+  border-radius: 50px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.drpet-suggest:hover {
+  background: #d0e8d8;
+}
+.drpet-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.75rem 1rem;
+  background: var(--sage-dark);
+  border-radius: 16px 16px 16px 4px;
+  width: fit-content;
+}
+.drpet-typing span {
+  width: 7px; height: 7px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 50%;
+  animation: drpet-bounce 1.2s infinite;
+}
+.drpet-typing span:nth-child(2) { animation-delay: 0.2s; }
+.drpet-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes drpet-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-5px); opacity: 1; }
+}
+</style>
+
+<!-- ═══════════════ DR. PET SCRIPT ═══════════════ -->
+<script>
+let drPetImageData = null;
+let drPetMediaType = null;
+
+function handleDrPetImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 4 * 1024 * 1024) {
+    alert('Please choose an image under 4MB.');
+    event.target.value = '';
+    return;
+  }
+
+  drPetMediaType = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    drPetImageData = dataUrl.split(',')[1]; // raw base64 only
+    document.getElementById('drpet-img-preview').src = dataUrl;
+    document.getElementById('drpet-img-preview-wrap').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function clearDrPetImage() {
+  drPetImageData = null;
+  drPetMediaType = null;
+  document.getElementById('drpet-img-preview-wrap').style.display = 'none';
+  document.getElementById('drpet-img-preview').src = '';
+}
+
+async function sendDrPet() {
+  const input = document.getElementById('drpet-input');
+  const message = input.value.trim();
+  if (!message && !drPetImageData) return;
+
+  const messagesDiv = document.getElementById('drpet-messages');
+  document.getElementById('drpet-suggestions').style.display = 'none';
+
+  // Build user bubble (image thumbnail + text)
+  const userDiv = document.createElement('div');
+  userDiv.className = 'drpet-user-msg';
+  let userContent = '';
+  if (drPetImageData) {
+    userContent += `<img src="data:${drPetMediaType};base64,${drPetImageData}"
+      style="max-height:140px;max-width:220px;border-radius:10px;display:block;margin-bottom:${message ? '0.4rem' : '0'};">`;
+  }
+  if (message) userContent += `<div>${escDrPet(message)}</div>`;
+  userDiv.innerHTML = `<div class="drpet-bubble-user" style="max-width:78%;">${userContent}</div>`;
+  messagesDiv.appendChild(userDiv);
+
+  const payload = { message, image_data: drPetImageData, media_type: drPetMediaType };
+
+  input.value = '';
+  input.style.height = 'auto';
+  clearDrPetImage();
+
+  // Typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'drpet-bot-msg';
+  typingDiv.id = 'drpet-typing';
+  typingDiv.innerHTML = `<span style="font-size:1.1rem;">🐾</span><div class="drpet-typing"><span></span><span></span><span></span></div>`;
+  messagesDiv.appendChild(typingDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  const sendBtn = document.getElementById('drpet-send-btn');
+  sendBtn.disabled = true;
+
+  try {
+    const res = await fetch('/api/drpet/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    messagesDiv.removeChild(typingDiv);
+
+    const botDiv = document.createElement('div');
+    botDiv.className = 'drpet-bot-msg';
+    botDiv.innerHTML = `<span style="font-size:1.1rem;">🐾</span><div class="drpet-bubble-bot">${escDrPet(data.response || 'Sorry, I could not get a response.')}</div>`;
+    messagesDiv.appendChild(botDiv);
+  } catch (e) {
+    messagesDiv.removeChild(typingDiv);
+    const errDiv = document.createElement('div');
+    errDiv.className = 'drpet-bot-msg';
+    errDiv.innerHTML = `<span style="font-size:1.1rem;">🐾</span><div class="drpet-bubble-bot" style="background:#b91c1c;">Sorry, I'm having trouble connecting. Please try again.</div>`;
+    messagesDiv.appendChild(errDiv);
+  } finally {
+    sendBtn.disabled = false;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+}
+
+function drpetQuick(btn) {
+  const input = document.getElementById('drpet-input');
+  input.value = btn.textContent.replace(/^[\u{1F000}-\u{1FFFF}]|^[\u2600-\u27BF]\s*/u, '').trim();
+  sendDrPet();
+}
+
+async function resetDrPet() {
+  await fetch('/api/drpet/reset', { method: 'POST' });
+  clearDrPetImage();
+  const messagesDiv = document.getElementById('drpet-messages');
+  messagesDiv.innerHTML = `
+    <div class="drpet-bot-msg">
+      <span style="font-size:1.1rem;">🐾</span>
+      <div class="drpet-bubble-bot">
+        Chat cleared! I'm ready for your next question. You can type a message or share a photo of your pet for a health check.
+      </div>
+    </div>`;
+  document.getElementById('drpet-suggestions').style.display = 'flex';
+}
+
+function escDrPet(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+</script>
+
+</body>
+</html>
